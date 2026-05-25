@@ -3,6 +3,11 @@ import 'package:mechanix_music/core/utils/colors.dart';
 
 class AppTheme {
   static final dark = ThemeData.dark(useMaterial3: true).copyWith(
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+    ),
+    scaffoldBackgroundColor: Colors.black,
     textTheme: ThemeData.dark(
       useMaterial3: true,
     ).textTheme.apply(fontFamily: "Sora"),
@@ -23,6 +28,11 @@ class AppTheme {
   );
 
   static final light = ThemeData.light(useMaterial3: true).copyWith(
+    scaffoldBackgroundColor: Colors.black,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+    ),
     textTheme: ThemeData.light(
       useMaterial3: true,
     ).textTheme.apply(fontFamily: "Sora"),
