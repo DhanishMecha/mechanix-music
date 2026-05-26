@@ -1,5 +1,7 @@
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
 abstract class SongRepository {
-  Future<List<SongModel>> syncInitialSongLibrary();
+  Future<bool> syncInitialSongLibrary();
+  Future<List<SongModel>> getSongs({required int offset, required int limit});
+  Future<int> getSongCount();
 }

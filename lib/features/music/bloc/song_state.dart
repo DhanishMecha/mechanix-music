@@ -1,17 +1,41 @@
+import 'package:equatable/equatable.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
-sealed class SongState {}
+sealed class SongState extends Equatable {
+  const SongState();
 
-final class SongInitial extends SongState {}
+  @override
+  List<Object?> get props => [];
+}
 
-final class SongLoading extends SongState {}
+final class SongInitial extends SongState {
+  const SongInitial();
+}
+
+final class SongLoading extends SongState {
+  const SongLoading();
+}
 
 final class SongLoaded extends SongState {
   final List<SongModel> songs;
-  SongLoaded(this.songs);
+  final bool hasMore;
+  final bool isLoadingMore;
+
+  const SongLoaded({
+    required this.songs,
+    required this.hasMore,
+    this.isLoadingMore = false,
+  });
+
+  @override
+  List<Object?> get props => [songs, hasMore, isLoadingMore];
 }
 
 final class SongError extends SongState {
   final String message;
-  SongError(this.message);
+
+  const SongError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

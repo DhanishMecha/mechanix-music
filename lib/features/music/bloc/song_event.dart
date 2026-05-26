@@ -1,3 +1,16 @@
-sealed class SongEvent {}
+import 'package:equatable/equatable.dart';
 
-final class SongInitialized extends SongEvent {}
+sealed class SongEvent extends Equatable {
+  const SongEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+final class SongInitialized extends SongEvent {
+  const SongInitialized();
+}
+
+final class SongLoadMore extends SongEvent {
+  const SongLoadMore();
+}
