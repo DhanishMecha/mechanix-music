@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:mechanix_music/core/exceptions/app_exceptions.dart';
 import 'package:mechanix_music/core/services/file_scanner_service.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/constants.dart';
+import 'package:mechanix_music/features/music/data/models/song_change.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 import 'package:mechanix_music/features/music/data/repository/song_repository.dart';
 import 'package:mechanix_music/objectbox.g.dart';
@@ -12,6 +14,16 @@ class SongRepositoryImpl extends SongRepository {
 
   Store? _store;
   Box<SongModel>? _box;
+
+  StreamSubscription<FileSystemEvent>? _watcherSubscription;
+  final Map<String, Timer> _debounceTimers = {};
+
+  // Stream that bloc will listen to for live changes
+  final StreamController<SongChange> _onSongChanged =
+      StreamController<SongChange>.broadcast();
+
+  @override
+  Stream<SongChange> get onSongChanged => _onSongChanged.stream;
 
   Future<void> ensureStoreConnected() async {
     if (_store != null && _store!.isClosed() == false) return;
@@ -48,6 +60,16 @@ class SongRepositoryImpl extends SongRepository {
   }
 
   void closeStore() {
+    _watcherSubscription?.cancel();
+    _watcherSubscription = null;
+
+    for (final timer in _debounceTimers.values) {
+      timer.cancel();
+    }
+    _debounceTimers.clear();
+
+    _onSongChanged.close();
+
     _store?.close();
     _store = null;
     _box = null;
@@ -65,9 +87,7 @@ class SongRepositoryImpl extends SongRepository {
       final incomingSongs = diskMap.values.toList();
 
       _store!.runInTransaction(TxMode.write, () {
-        // Clear existing records
         _box!.removeAll();
-
         _box!.putMany(incomingSongs);
       });
 
@@ -76,6 +96,7 @@ class SongRepositoryImpl extends SongRepository {
         '${Constants.musicDir}',
       );
 
+      _startWatcher();
       return true;
     } on AppAlreadyRunningException catch (_) {
       rethrow;
@@ -107,5 +128,120 @@ class SongRepositoryImpl extends SongRepository {
   Future<int> getSongCount() async {
     await ensureStoreConnected();
     return _box!.count();
+  }
+
+  // ── Watcher ──────────────────────────────────────────────────────────────
+
+  void _startWatcher() {
+    _watcherSubscription?.cancel();
+
+    _watcherSubscription = Directory(Constants.musicDir)
+        .watch(recursive: false)
+        .listen((event) {
+          if (!isAudioFile(event.path)) return;
+
+          switch (event.type) {
+            case FileSystemEvent.create:
+            case FileSystemEvent.modify:
+              _debounce(event.path, () => _onUpsert(event.path));
+
+            case FileSystemEvent.delete:
+              // Cancel any pending debounce for this path and act immediately
+              _debounceTimers[event.path]?.cancel();
+              _debounceTimers.remove(event.path);
+              _onDelete(event.path);
+
+            case FileSystemEvent.move:
+              final moveEvent = event as FileSystemMoveEvent;
+              final destination = moveEvent.destination;
+              if (destination == null) return;
+
+              // Cancel pending debounce for old path and act immediately
+              _debounceTimers[moveEvent.path]?.cancel();
+              _debounceTimers.remove(moveEvent.path);
+              _onMove(oldPath: moveEvent.path, newPath: destination);
+          }
+        });
+
+    AppLogger.i('[FileWatcher] Watching ${Constants.musicDir}');
+  }
+
+  void _debounce(String path, void Function() action) {
+    _debounceTimers[path]?.cancel();
+    _debounceTimers[path] = Timer(const Duration(milliseconds: 300), () {
+      _debounceTimers.remove(path);
+      action();
+    });
+  }
+
+  Future<void> _onUpsert(String path) async {
+    try {
+      final song = await _fileScannerService.buildSongModel(path);
+      if (song == null) return;
+
+      final existing = _box!
+          .query(SongModel_.path.equals(path))
+          .build()
+          .findFirst();
+
+      if (existing != null) song.obxId = existing.obxId;
+
+      _box!.put(song);
+      AppLogger.i('[FileWatcher] Upserted: $path');
+      _onSongChanged.add(SongChange(type: SongChangeType.upsert, song: song));
+    } catch (e) {
+      AppLogger.e('[FileWatcher] Upsert failed for $path: $e');
+    }
+  }
+
+  void _onDelete(String path) {
+    try {
+      final existing = _box!
+          .query(SongModel_.path.equals(path))
+          .build()
+          .findFirst();
+
+      if (existing == null) return;
+
+      _box!.remove(existing.obxId);
+      AppLogger.i('[FileWatcher] Deleted: $path');
+      _onSongChanged.add(
+        SongChange(type: SongChangeType.delete, song: existing),
+      );
+    } catch (e) {
+      AppLogger.e('[FileWatcher] Delete failed for $path: $e');
+    }
+  }
+
+  Future<void> _onMove({
+    required String oldPath,
+    required String newPath,
+  }) async {
+    try {
+      final existing = _box!
+          .query(SongModel_.path.equals(oldPath))
+          .build()
+          .findFirst();
+
+      if (existing == null) return;
+
+      final updated = await _fileScannerService.buildSongModel(newPath);
+      if (updated == null) return;
+
+      updated.obxId = existing.obxId;
+      _box!.put(updated);
+
+      AppLogger.i('[FileWatcher] Moved: $oldPath → $newPath');
+      _onSongChanged.add(
+        SongChange(type: SongChangeType.upsert, song: updated),
+      );
+    } catch (e) {
+      AppLogger.e('[FileWatcher] Move failed $oldPath → $newPath: $e');
+    }
+  }
+
+  bool isAudioFile(String path) {
+    final lower = path.toLowerCase();
+    return Constants.audioExt.any((ext) => lower.endsWith(ext));
   }
 }

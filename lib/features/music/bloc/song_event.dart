@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
 sealed class SongEvent extends Equatable {
   const SongEvent();
@@ -13,4 +14,20 @@ final class SongInitialized extends SongEvent {
 
 final class SongLoadMore extends SongEvent {
   const SongLoadMore();
+}
+
+final class SongUpsert extends SongEvent {
+  final SongModel song;
+  const SongUpsert(this.song);
+
+  @override
+  List<Object?> get props => [song];
+}
+
+final class SongDelete extends SongEvent {
+  final SongModel song;
+  const SongDelete(this.song);
+
+  @override
+  List<Object?> get props => [song];
 }

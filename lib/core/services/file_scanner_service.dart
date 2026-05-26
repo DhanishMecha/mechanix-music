@@ -29,7 +29,7 @@ class FileScannerService {
           final ext = p.extension(entity.path).toLowerCase();
           if (!Constants.audioExt.contains(ext)) continue;
 
-          final song = await _buildSongModel(entity.path);
+          final song = await buildSongModel(entity.path);
           if (song == null) continue;
 
           result[song.id] = song;
@@ -56,7 +56,7 @@ class FileScannerService {
     return result;
   }
 
-  Future<SongModel?> _buildSongModel(String filePath) async {
+  Future<SongModel?> buildSongModel(String filePath) async {
     try {
       const uuid = Uuid();
       final id = uuid.v4();
