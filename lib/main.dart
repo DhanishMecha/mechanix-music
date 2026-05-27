@@ -1,12 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/app_routes.dart';
 import 'package:mechanix_music/core/utils/theme.dart';
+import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/song_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/song_event.dart';
 import 'package:mechanix_music/features/music/data/repository/song_repository.dart';
 import 'package:mechanix_music/features/music/data/repository/song_repository_impl.dart';
+import 'package:mechanix_music/features/music/data/repository/playback_repository.dart';
+import 'package:mechanix_music/features/music/data/repository/playback_repository_impl.dart';
 import 'package:mechanix_music/features/music/presentation/screens/music_screen.dart';
+import 'package:mechanix_music/features/music/presentation/screens/player_screen.dart';
 import 'package:show_fps/show_fps.dart';
 
 void main() {
@@ -16,6 +21,9 @@ void main() {
     MultiRepositoryProvider(
       providers: [
         RepositoryProvider<SongRepository>(create: (_) => SongRepositoryImpl()),
+        RepositoryProvider<PlaybackRepository>(
+          create: (_) => PlaybackRepositoryImpl(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -24,6 +32,12 @@ void main() {
             create: (context) =>
                 SongBloc(songRepository: context.read<SongRepository>())
                   ..add(const SongInitialized()),
+          ),
+          BlocProvider(
+            create: (context) => PlaybackBloc(
+              context.read<PlaybackRepository>(),
+              context.read<SongBloc>(),
+            ),
           ),
         ],
         child: const MusicApp(),
@@ -49,7 +63,7 @@ class MusicApp extends StatelessWidget {
       themeMode: ThemeMode.dark,
       darkTheme: AppTheme.dark,
       theme: AppTheme.light,
-
+      routes: {AppRoutes.player: (context) => const PlayerScreen()},
       home: const MusicScreen(),
     );
   }

@@ -1,8 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
+import 'package:mechanix_music/core/utils/app_routes.dart';
 import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/core/utils/icons.dart';
+import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
+import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
 class TrackTile extends StatelessWidget {
@@ -17,6 +21,8 @@ class TrackTile extends StatelessWidget {
       dense: false,
       onTap: () => {
         AppLogger.i('Song tapped: ${song.title} by ${song.artist}'),
+        context.read<PlaybackBloc>().add(PlaybackPlay(song)),
+        Navigator.pushNamed(context, AppRoutes.player),
       },
       leading: _ArtworkWidget(artworkPath: song.artworkPath),
       title: Text(
@@ -50,10 +56,7 @@ class _ArtworkWidget extends StatelessWidget {
     if (artworkPath != null) {
       final file = File(artworkPath!);
       if (file.existsSync()) {
-        return CircleAvatar(
-          radius: 26,
-          backgroundImage: FileImage(file),
-        );
+        return CircleAvatar(radius: 26, backgroundImage: FileImage(file));
       }
     }
 
