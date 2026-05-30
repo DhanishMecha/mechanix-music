@@ -43,23 +43,7 @@ class MusicBottomBar extends StatelessWidget {
           child: DecoratedBox(
             decoration: const BoxDecoration(
               color: MusicColors.bottomBarBg,
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x99000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 0),
-                ),
-                BoxShadow(
-                  color: Color(0x40000000),
-                  blurRadius: 5,
-                  offset: Offset(0, -1),
-                ),
-                BoxShadow(
-                  color: Color(0x40000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 4),
-                ),
-              ],
+              boxShadow: [],
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),

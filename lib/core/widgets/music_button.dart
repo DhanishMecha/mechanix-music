@@ -9,6 +9,7 @@ class MusicButton extends StatelessWidget {
     required this.onTap,
     this.boxSize = 44,
     this.iconSize = 28,
+    this.iconColor,
   });
 
   final String iconPath;
@@ -16,6 +17,7 @@ class MusicButton extends StatelessWidget {
   final VoidCallback onTap;
   final double boxSize;
   final double iconSize;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -24,27 +26,26 @@ class MusicButton extends StatelessWidget {
       iconSize: iconSize,
       padding: EdgeInsets.zero,
       constraints: BoxConstraints.tightFor(width: boxSize, height: boxSize),
-      // for tap effect
-      // style: ButtonStyle(
-      //   backgroundColor: WidgetStateProperty.all(
-      //     isSelected ? MusicColors.borderColor : Colors.transparent,
-      //   ),
-      //   shape: WidgetStateProperty.all(
-      //     RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      //   ),
-      //   // Subtle white flash on press for tap feedback.
-      //   overlayColor: WidgetStateProperty.resolveWith((states) {
-      //     if (states.contains(WidgetState.pressed)) {
-      //       return const Color(0x22FFFFFF);
-      //     }
-      //     return Colors.transparent;
-      //   }),
-      // ),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all(
+          isSelected ? MusicColors.borderColor : Colors.transparent,
+        ),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.pressed)) {
+            return const Color(0x1AFFFFFF);
+          }
+          return Colors.transparent;
+        }),
+      ),
       icon: Image.asset(
         iconPath,
         width: iconSize,
         height: iconSize,
-        color: MusicColors.titleColor,
+        color:
+            iconColor ?? (isSelected ? Colors.white : MusicColors.titleColor),
       ),
     );
   }

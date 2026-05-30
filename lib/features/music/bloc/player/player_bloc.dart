@@ -32,6 +32,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     on<PlaybackListUpdated>(_onPlaybackListUpdated);
 
     _listenToSongBloc();
+    _listenToSongComplete();
   }
 
   void _listenToSongBloc() {
@@ -39,6 +40,18 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       AppLogger.i('[PlaybackBloc] Song state updated: $songState');
       if (songState is SongLoaded) {
         add(PlaybackListUpdated(songState.songs));
+      }
+    });
+  }
+
+  void _listenToSongComplete() {
+    _repo.onSongComplete.listen((_) {
+      AppLogger.i('[PlaybackBloc] Song completed, attempting to play next...');
+      if (state.hasNext) {
+        add(const PlaybackPlayNext());
+      } else {
+        AppLogger.i('[PlaybackBloc] No next song available — pausing playback');
+        add(const PlaybackPause());
       }
     });
   }

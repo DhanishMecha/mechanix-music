@@ -8,6 +8,7 @@ abstract class PlaybackRepository {
   bool get isPlaying;
   Stream<Duration> get onPositionChanged;
   Stream<Duration> get onDurationChanged;
+  Stream<void> get onSongComplete;
   Future<Duration?> getDuration();
   Future<Duration?> getCurrentPosition();
 }

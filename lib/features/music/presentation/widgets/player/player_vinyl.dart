@@ -100,8 +100,8 @@ class _PlayerVinylState extends State<PlayerVinyl>
   }
 
   void _handleGesture(Offset localPosition, double size, {bool isTap = false}) {
-    final outerWidth = size + 110;
-    final outerHeight = size + 60;
+    final outerWidth = size + 60;
+    final outerHeight = size + 40;
     final center = Offset(outerWidth / 2, outerHeight / 2);
     final dx = localPosition.dx - center.dx;
     final dy = localPosition.dy - center.dy;
@@ -160,8 +160,8 @@ class _PlayerVinylState extends State<PlayerVinyl>
   }
 
   void _handleHover(Offset localPosition, double size) {
-    final outerWidth = size + 110;
-    final outerHeight = size + 60;
+    final outerWidth = size + 60;
+    final outerHeight = size + 40;
     final center = Offset(outerWidth / 2, outerHeight / 2);
     final dx = localPosition.dx - center.dx;
     final dy = localPosition.dy - center.dy;
@@ -183,10 +183,9 @@ class _PlayerVinylState extends State<PlayerVinyl>
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final size = screenWidth * 0.50;
-    final outerWidth = size + 110;
-    final outerHeight = size + 60;
+    final size = 280.0;
+    final outerWidth = size + 60;
+    final outerHeight = size + 40;
     final center = Offset(outerWidth / 2, outerHeight / 2);
     final radius = size / 2 + 18;
 
@@ -271,24 +270,28 @@ class _PlayerVinylState extends State<PlayerVinyl>
 
                 // 2. Center Vinyl Artwork
                 Center(
-                  child: RotationTransition(
-                    turns: _rotationController,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Image.asset(
-                          MusicIcons.playerDisc,
-                          width: size,
-                          height: size,
-                          fit: BoxFit.cover,
-                        ),
-                        ClipOval(
-                          child: _buildArtworkWidget(
-                            song?.artworkPath,
-                            size * 0.35,
+                  child: SizedBox(
+                    width: size,
+                    height: size,
+                    child: RotationTransition(
+                      turns: _rotationController,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Image.asset(
+                            MusicIcons.playerDisc,
+                            width: size,
+                            height: size,
+                            fit: BoxFit.cover,
                           ),
-                        ),
-                      ],
+                          ClipOval(
+                            child: _buildArtworkWidget(
+                              song?.artworkPath,
+                              size * 0.35,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

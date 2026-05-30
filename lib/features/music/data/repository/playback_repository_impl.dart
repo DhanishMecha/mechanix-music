@@ -39,6 +39,9 @@ class PlaybackRepositoryImpl extends PlaybackRepository {
   Stream<Duration> get onDurationChanged => _audioPlayer.onDurationChanged;
 
   @override
+  Stream<void> get onSongComplete => _audioPlayer.onPlayerComplete;
+
+  @override
   Future<Duration?> getDuration() => _audioPlayer.getDuration();
 
   @override
