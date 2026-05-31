@@ -1,0 +1,108 @@
+import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+
+class BreadcrumbsHeader extends StatelessWidget {
+  final String currentPath;
+  final String initialPath;
+  final String rootTitle;
+  final ValueChanged<String> onNavigate;
+  final VoidCallback onPop;
+
+  const BreadcrumbsHeader({
+    super.key,
+    required this.currentPath,
+    required this.initialPath,
+    required this.rootTitle,
+    required this.onNavigate,
+    required this.onPop,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final segments = <({String name, String path})>[];
+    segments.add((name: 'Browse music', path: 'pop'));
+
+    if (currentPath.startsWith(initialPath)) {
+      final relative = currentPath.substring(initialPath.length);
+      final parts = relative.split('/').where((s) => s.isNotEmpty).toList();
+
+      segments.add((name: rootTitle, path: initialPath));
+
+      String current = initialPath;
+      for (final part in parts) {
+        current = p.join(current, part);
+        segments.add((name: part, path: current));
+      }
+    } else {
+      segments.add((name: 'Root', path: '/'));
+      if (currentPath != '/') {
+        final parts = currentPath.split('/').where((s) => s.isNotEmpty).toList();
+        String current = '';
+        for (final part in parts) {
+          current += '/$part';
+          segments.add((name: part, path: current));
+        }
+      }
+    }
+
+    return Container(
+      height: 64,
+      width: double.infinity,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF1C1C1C), width: 1),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(segments.length, (index) {
+            final segment = segments[index];
+            final isLast = index == segments.length - 1;
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: isLast
+                      ? null
+                      : () {
+                          if (segment.path == 'pop') {
+                            onPop();
+                          } else {
+                            onNavigate(segment.path);
+                          }
+                        },
+                  child: Text(
+                    segment.name,
+                    style: TextStyle(
+                      color: isLast
+                          ? const Color(0xFFFFFFFF)
+                          : const Color(0xFF808080),
+                      fontSize: 18,
+                      fontWeight: isLast ? FontWeight.w500 : FontWeight.w400,
+                    ),
+                  ),
+                ),
+                if (!isLast)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      '/',
+                      style: TextStyle(
+                        color: Color(0xFF808080),
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
