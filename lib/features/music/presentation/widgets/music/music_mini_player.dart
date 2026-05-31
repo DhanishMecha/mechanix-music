@@ -148,17 +148,19 @@ class _MusicMiniPlayerState extends State<MusicMiniPlayer> {
               ),
 
               // Audiocast
-              MusicButton(
-                iconPath: MusicIcons.audiocastIcon,
-                boxSize: 44,
-                iconSize: 24,
-                isSelected: false,
-                onTap: () {},
-              ),
+              // MusicButton(
+              //   iconPath: MusicIcons.audiocastIcon,
+              //   boxSize: 44,
+              //   iconSize: 24,
+              //   isSelected: false,
+              //   onTap: () {},
+              // ),
 
               // Play/Pause
               BlocSelector<PlaybackBloc, PlaybackState, bool>(
-                selector: (state) => state.status == PlaybackStatus.playing,
+                selector: (state) =>
+                    state.status == PlaybackStatus.playing ||
+                    state.status == PlaybackStatus.loading,
                 builder: (context, isPlaying) => MusicButton(
                   boxSize: 44,
                   iconSize: 24,

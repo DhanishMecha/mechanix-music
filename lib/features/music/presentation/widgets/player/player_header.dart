@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/colors.dart';
-import 'package:mechanix_music/core/utils/icons.dart';
-import 'package:mechanix_music/core/widgets/music_button.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
@@ -55,15 +53,15 @@ class PlayerHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-        Align(
-          alignment: Alignment.center,
-          child: MusicButton(
-            iconPath: MusicIcons.audiocastIcon,
-            boxSize: 48,
-            isSelected: false,
-            onTap: () {},
-          ),
-        ),
+        // Align(
+        //   alignment: Alignment.center,
+        //   child: MusicButton(
+        //     iconPath: MusicIcons.audiocastIcon,
+        //     boxSize: 48,
+        //     isSelected: false,
+        //     onTap: () {},
+        //   ),
+        // ),
       ],
     );
   }

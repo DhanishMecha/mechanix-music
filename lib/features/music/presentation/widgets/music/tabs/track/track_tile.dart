@@ -79,10 +79,15 @@ class _ArtworkWidget extends StatelessWidget {
     if (artworkPath != null) {
       final file = File(artworkPath!);
       if (file.existsSync()) {
-        return CircleAvatar(radius: 26, backgroundImage: FileImage(file));
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(50),
+          child: Image.file(
+            file,
+            errorBuilder: (context, error, stackTrace) => _fallback(),
+          ),
+        );
       }
     }
-
     return _fallback();
   }
 

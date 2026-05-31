@@ -15,12 +15,13 @@ class PlayerControls extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         //repeat icon
-        MusicButton(
-          boxSize: 48,
-          iconPath: MusicIcons.repeatIcon,
-          isSelected: false,
-          onTap: () {},
-        ),
+        // MusicButton(
+        //   boxSize: 48,
+        //   iconPath: MusicIcons.repeatIcon,
+        //   isSelected: false,
+        //   onTap: () {},
+        // ),
+        const SizedBox(),
 
         // previous icon
         MusicButton(
@@ -34,7 +35,9 @@ class PlayerControls extends StatelessWidget {
 
         // pause/resume icon
         BlocSelector<PlaybackBloc, PlaybackState, bool>(
-          selector: (state) => state.status == PlaybackStatus.playing,
+          selector: (state) =>
+              state.status == PlaybackStatus.playing ||
+              state.status == PlaybackStatus.loading,
           builder: (context, isPlaying) {
             return MusicButton(
               boxSize: 48,
@@ -62,14 +65,15 @@ class PlayerControls extends StatelessWidget {
             context.read<PlaybackBloc>().add(const PlaybackPlayNext());
           },
         ),
+        const SizedBox(),
 
         // shuffle icon
-        MusicButton(
-          boxSize: 48,
-          iconPath: MusicIcons.shuffleIcon,
-          isSelected: false,
-          onTap: () {},
-        ),
+        // MusicButton(
+        //   boxSize: 48,
+        //   iconPath: MusicIcons.shuffleIcon,
+        //   isSelected: false,
+        //   onTap: () {},
+        // ),
       ],
     );
   }
