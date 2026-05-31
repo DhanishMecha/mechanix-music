@@ -9,6 +9,7 @@ class PlaybackState extends Equatable {
   final List<SongModel> playbackList;
   final int currentIndex;
   final String? error;
+  final Duration songDuration;
 
   const PlaybackState({
     this.status = PlaybackStatus.initial,
@@ -16,6 +17,7 @@ class PlaybackState extends Equatable {
     this.playbackList = const [],
     this.currentIndex = 0,
     this.error,
+    this.songDuration = Duration.zero,
   });
 
   bool get hasNext => currentIndex < playbackList.length - 1;
@@ -27,14 +29,23 @@ class PlaybackState extends Equatable {
     List<SongModel>? playbackList,
     int? currentIndex,
     String? error,
+    Duration? songDuration,
   }) => PlaybackState(
     status: status ?? this.status,
     song: song ?? this.song,
     playbackList: playbackList ?? this.playbackList,
     currentIndex: currentIndex ?? this.currentIndex,
     error: error ?? this.error,
+    songDuration: songDuration ?? this.songDuration,
   );
 
   @override
-  List<Object?> get props => [status, song, playbackList, currentIndex, error];
+  List<Object?> get props => [
+    status,
+    song,
+    playbackList,
+    currentIndex,
+    error,
+    songDuration,
+  ];
 }

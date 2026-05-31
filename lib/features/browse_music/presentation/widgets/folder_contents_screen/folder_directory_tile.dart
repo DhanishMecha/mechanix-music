@@ -3,14 +3,12 @@ import 'package:mechanix_music/features/browse_music/data/models/file_system_ent
 
 class FolderDirectoryTile extends StatelessWidget {
   final FileSystemEntry entry;
-  final bool isSelectionMode;
   final String Function(DateTime) formatDate;
   final VoidCallback onTap;
 
   const FolderDirectoryTile({
     super.key,
     required this.entry,
-    required this.isSelectionMode,
     required this.formatDate,
     required this.onTap,
   });
@@ -27,20 +25,6 @@ class FolderDirectoryTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Row(
             children: [
-              if (isSelectionMode)
-                Container(
-                  width: 24,
-                  height: 24,
-                  margin: const EdgeInsets.only(right: 16),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0x33808080),
-                      width: 2,
-                    ),
-                    color: Colors.transparent,
-                  ),
-                ),
               const Icon(
                 Icons.folder_open_outlined,
                 size: 24,

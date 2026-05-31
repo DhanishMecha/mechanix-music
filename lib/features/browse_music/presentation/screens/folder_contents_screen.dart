@@ -7,14 +7,14 @@ import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.da
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_state.dart';
 import 'package:mechanix_music/features/browse_music/data/models/file_system_entry.dart';
 import 'package:mechanix_music/features/browse_music/data/repository/browse_repository_impl.dart';
-import 'package:mechanix_music/features/browse_music/presentation/screens/folder_contents_screen/folder_content_body.dart';
+import 'package:mechanix_music/features/browse_music/presentation/widgets/folder_contents_screen/folder_content_body.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
-import 'breadcrumbs_header.dart';
-import 'selection_bottom_bar.dart';
-import 'selection_header.dart';
+import '../widgets/folder_contents_screen/breadcrumbs_header.dart';
+import '../widgets/folder_contents_screen/selection_bottom_bar.dart';
+import '../widgets/folder_contents_screen/selection_header.dart';
 
 class FolderContentsScreen extends StatefulWidget {
   final String initialPath;

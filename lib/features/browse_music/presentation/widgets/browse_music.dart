@@ -3,7 +3,7 @@ import 'package:mechanix_music/core/utils/browse_folder_options.dart';
 import 'package:mechanix_music/features/browse_music/data/models/browse_folder_item.dart';
 import 'package:mechanix_music/features/browse_music/data/repository/browse_repository.dart';
 import 'package:mechanix_music/features/browse_music/data/repository/browse_repository_impl.dart';
-import 'package:mechanix_music/features/browse_music/presentation/screens/folder_contents_screen/folder_contents_screen.dart';
+import 'package:mechanix_music/features/browse_music/presentation/screens/folder_contents_screen.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/browse_folder_tile.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/browse_section_header.dart';
 

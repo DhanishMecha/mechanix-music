@@ -7,7 +7,9 @@ import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/core/utils/icons.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
+import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
+import 'package:mechanix_music/features/music/presentation/widgets/music/tabs/track/track_equalizer_animation.dart';
 
 class TrackTile extends StatelessWidget {
   final SongModel song;
@@ -19,10 +21,13 @@ class TrackTile extends StatelessWidget {
     return ListTile(
       minVerticalPadding: 20,
       dense: false,
-      onTap: () => {
-        AppLogger.i('Song tapped: ${song.title} by ${song.artist}'),
-        context.read<PlaybackBloc>().add(PlaybackPlay(song)),
-        Navigator.pushNamed(context, AppRoutes.player),
+      onTap: () {
+        AppLogger.i('Song tapped: ${song.title} by ${song.artist}');
+        final currentSong = context.read<PlaybackBloc>().state.song;
+        context.read<PlaybackBloc>().add(PlaybackPlay(song));
+        if (currentSong == null) {
+          Navigator.pushNamed(context, AppRoutes.player);
+        }
       },
       leading: _ArtworkWidget(artworkPath: song.artworkPath),
       title: Text(
@@ -37,10 +42,28 @@ class TrackTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: SizedBox(
-        width: 40,
-        height: 40,
-        child: Image.asset(MusicIcons.threedotIcon, width: 28, height: 28),
+      trailing: BlocBuilder<PlaybackBloc, PlaybackState>(
+        buildWhen: (previous, current) {
+          final isCurrentSong = current.song?.id == song.id;
+          final wasPreviousSong = previous.song?.id == song.id;
+
+          // Rebuild if this song became active or inactive
+          if (isCurrentSong != wasPreviousSong) return true;
+
+          // Rebuild only if this song is playing and status changed
+          if (isCurrentSong && previous.status != current.status) return true;
+
+          return false;
+        },
+        builder: (context, state) {
+          final isCurrentSong = state.song?.id == song.id;
+
+          if (!isCurrentSong) return const SizedBox();
+
+          return EqualizerIcon(
+            isPlaying: state.status == PlaybackStatus.playing,
+          );
+        },
       ),
     );
   }

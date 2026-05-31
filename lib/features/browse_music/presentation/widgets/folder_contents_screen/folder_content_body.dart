@@ -13,7 +13,8 @@ class FolderContentsBody extends StatelessWidget {
   final ScrollController scrollController;
   final String Function(DateTime) formatDate;
   final void Function(String path) onDirectoryTap;
-  final void Function(FileSystemEntry entry, List<FileSystemEntry> allEntries) onFileTap;
+  final void Function(FileSystemEntry entry, List<FileSystemEntry> allEntries)
+  onFileTap;
   final void Function(String path) onFileLongPress;
   final void Function(String path) onToggleSelection;
   final VoidCallback onRetry;
@@ -41,10 +42,7 @@ class FolderContentsBody extends StatelessWidget {
     }
 
     if (state.error != null) {
-      return FolderErrorState(
-        error: state.error!,
-        onRetry: onRetry,
-      );
+      return FolderErrorState(error: state.error!, onRetry: onRetry);
     }
 
     if (state.entries.isEmpty) {
@@ -64,7 +62,6 @@ class FolderContentsBody extends StatelessWidget {
         if (entry.isDirectory) {
           return FolderDirectoryTile(
             entry: entry,
-            isSelectionMode: state.isSelectionMode,
             formatDate: formatDate,
             onTap: () => onDirectoryTap(entry.path),
           );

@@ -30,9 +30,47 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     on<PlaybackPlayNext>(_onPlayNext);
     on<PlaybackPlayPrevious>(_onPlayPrevious);
     on<PlaybackListUpdated>(_onPlaybackListUpdated);
+    on<PlaybackDurationUpdated>(_onDurationUpdated);
 
     _listenToSongBloc();
     _listenToSongComplete();
+    _listenToDurationChanged();
+  }
+
+  void _listenToDurationChanged() {
+    _repo.onDurationChanged.listen((duration) async {
+      if (duration.inMilliseconds > 0) {
+        AppLogger.i('[PlaybackBloc] Duration ready: $duration');
+        add(PlaybackDurationUpdated(duration));
+        return;
+      }
+
+      // audioplayers emitted a bad value — retry up to 10 times
+      AppLogger.i('[PlaybackBloc] Invalid duration received, retrying...');
+      for (var attempt = 1; attempt <= 10; attempt++) {
+        await Future.delayed(const Duration(milliseconds: 150));
+        final retried = await _repo.getDuration();
+        if (retried != null && retried.inMilliseconds > 0) {
+          AppLogger.i(
+            '[PlaybackBloc] Duration resolved on attempt $attempt: $retried',
+          );
+          add(PlaybackDurationUpdated(retried));
+          return;
+        }
+        AppLogger.i('[PlaybackBloc] Attempt $attempt failed — got $retried');
+      }
+
+      AppLogger.e(
+        '[PlaybackBloc] Could not resolve duration after 10 attempts',
+      );
+    });
+  }
+
+  void _onDurationUpdated(
+    PlaybackDurationUpdated event,
+    Emitter<PlaybackState> emit,
+  ) {
+    emit(state.copyWith(songDuration: event.duration));
   }
 
   void _listenToSongBloc() {

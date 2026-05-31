@@ -35,20 +35,16 @@ class MusicMiniPlayer extends StatefulWidget {
 }
 
 class _MusicMiniPlayerState extends State<MusicMiniPlayer> {
-  // Single double instead of two Durations avoids redundant divisions on build
   double _progress = 0.0;
 
   StreamSubscription<Duration>? _positionSub;
-  StreamSubscription<Duration>? _durationSub;
 
-  // Kept as raw ms to avoid Duration object allocation on every tick
   int _positionMs = 0;
   int _durationMs = 0;
 
   void _updateProgress() {
     if (_durationMs <= 0) return;
     final next = (_positionMs / _durationMs).clamp(0.0, 1.0);
-    // Only call setState when the value actually changed — avoids spurious rebuilds
     if (next != _progress) setState(() => _progress = next);
   }
 
@@ -57,15 +53,16 @@ class _MusicMiniPlayerState extends State<MusicMiniPlayer> {
     super.initState();
     final repo = context.read<PlaybackRepository>();
 
+    // Seed duration from bloc state immediately
+    _durationMs = context
+        .read<PlaybackBloc>()
+        .state
+        .songDuration
+        .inMilliseconds;
+
     repo.getCurrentPosition().then((pos) {
       if (!mounted || pos == null) return;
       _positionMs = pos.inMilliseconds;
-      _updateProgress();
-    });
-
-    repo.getDuration().then((dur) {
-      if (!mounted || dur == null) return;
-      _durationMs = dur.inMilliseconds;
       _updateProgress();
     });
 
@@ -73,107 +70,109 @@ class _MusicMiniPlayerState extends State<MusicMiniPlayer> {
       _positionMs = pos.inMilliseconds;
       _updateProgress();
     });
-
-    _durationSub = repo.onDurationChanged.listen((dur) {
-      _durationMs = dur.inMilliseconds;
-      _updateProgress();
-    });
   }
 
   @override
   void dispose() {
     _positionSub?.cancel();
-    _durationSub?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pushNamed(AppRoutes.player),
-      behavior: HitTestBehavior.translucent,
-      child: Container(
-        height: 72,
-        color: MusicColors.backgroundColor,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          children: [
-            BlocSelector<PlaybackBloc, PlaybackState, String?>(
-              selector: (state) => state.song?.artworkPath,
-              builder: (context, artworkPath) => _ProgressArtwork(
-                artworkPath: artworkPath,
-                progress: _progress,
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Song title / artist
-            Expanded(
-              child: BlocSelector<PlaybackBloc, PlaybackState, (String, String)>(
-                // Single selector returns a record — one rebuild for both fields
-                selector: (state) => (
-                  state.song?.title ?? 'Now Playing',
-                  state.song?.artist ?? 'Unknown',
+    return BlocListener<PlaybackBloc, PlaybackState>(
+      listenWhen: (previous, current) =>
+          previous.songDuration != current.songDuration,
+      listener: (context, state) {
+        _durationMs = state.songDuration.inMilliseconds;
+        _updateProgress();
+      },
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).pushNamed(AppRoutes.player),
+        behavior: HitTestBehavior.translucent,
+        child: Container(
+          height: 72,
+          color: MusicColors.backgroundColor,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              BlocSelector<PlaybackBloc, PlaybackState, String?>(
+                selector: (state) => state.song?.artworkPath,
+                builder: (context, artworkPath) => _ProgressArtwork(
+                  artworkPath: artworkPath,
+                  progress: _progress,
                 ),
-                builder: (context, songInfo) {
-                  final (title, artist) = songInfo;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 4,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          height: 1.2,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        artist,
-                        style: const TextStyle(
-                          color: MusicColors.timeLabelColor,
-                          fontSize: 12,
-                          height: 1.25,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  );
-                },
               ),
-            ),
+              const SizedBox(width: 12),
 
-            // Audiocast — stateless, no rebuilds needed
-            MusicButton(
-              iconPath: MusicIcons.audiocastIcon,
-              boxSize: 44,
-              iconSize: 24,
-              isSelected: false,
-              onTap: () {},
-            ),
+              // Song title / artist
+              Expanded(
+                child:
+                    BlocSelector<PlaybackBloc, PlaybackState, (String, String)>(
+                      selector: (state) => (
+                        state.song?.title ?? 'Now Playing',
+                        state.song?.artist ?? 'Unknown',
+                      ),
+                      builder: (context, songInfo) {
+                        final (title, artist) = songInfo;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 4,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                height: 1.2,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              artist,
+                              style: const TextStyle(
+                                color: MusicColors.timeLabelColor,
+                                fontSize: 12,
+                                height: 1.25,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+              ),
 
-            // Play/Pause — BlocSelector scoped to a single bool
-            BlocSelector<PlaybackBloc, PlaybackState, bool>(
-              selector: (state) => state.status == PlaybackStatus.playing,
-              builder: (context, isPlaying) => MusicButton(
+              // Audiocast
+              MusicButton(
+                iconPath: MusicIcons.audiocastIcon,
                 boxSize: 44,
                 iconSize: 24,
-                iconPath: isPlaying
-                    ? MusicIcons.pauseIcon
-                    : MusicIcons.resumeIcon,
                 isSelected: false,
-                onTap: () => context.read<PlaybackBloc>().add(
-                  isPlaying ? const PlaybackPause() : const PlaybackResume(),
+                onTap: () {},
+              ),
+
+              // Play/Pause
+              BlocSelector<PlaybackBloc, PlaybackState, bool>(
+                selector: (state) => state.status == PlaybackStatus.playing,
+                builder: (context, isPlaying) => MusicButton(
+                  boxSize: 44,
+                  iconSize: 24,
+                  iconPath: isPlaying
+                      ? MusicIcons.pauseIcon
+                      : MusicIcons.resumeIcon,
+                  isSelected: false,
+                  onTap: () => context.read<PlaybackBloc>().add(
+                    isPlaying ? const PlaybackPause() : const PlaybackResume(),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -216,7 +215,6 @@ class _ProgressArtworkState extends State<_ProgressArtwork>
   void didUpdateWidget(covariant _ProgressArtwork oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.progress != widget.progress) {
-      // Start the tween from wherever the arc currently sits visually
       _animatedFrom = _animation.value;
       _animation = _buildAnimation(from: _animatedFrom, to: widget.progress);
       _controller.forward(from: 0);
@@ -238,7 +236,6 @@ class _ProgressArtworkState extends State<_ProgressArtwork>
       height: 44,
       child: AnimatedBuilder(
         animation: _animation,
-        // child is cached by AnimatedBuilder and passed through unchanged
         child: artwork,
         builder: (context, child) => Stack(
           alignment: Alignment.center,
@@ -281,7 +278,6 @@ class _ProgressBorderPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final rect = Rect.fromCircle(center: center, radius: radius);
 
-    // Track (full circle, dimmed)
     canvas.drawCircle(
       center,
       radius,
@@ -291,12 +287,11 @@ class _ProgressBorderPainter extends CustomPainter {
         ..strokeWidth = borderWidth,
     );
 
-    // Progress arc — anticlockwise from 12 o'clock
     if (progress > 0) {
       canvas.drawArc(
         rect,
         -pi / 2,
-        -progress * 2 * pi, // negative = anticlockwise
+        -progress * 2 * pi,
         false,
         Paint()
           ..color = progressColor

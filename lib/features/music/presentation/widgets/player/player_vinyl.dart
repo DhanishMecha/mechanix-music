@@ -22,13 +22,11 @@ class _PlayerVinylState extends State<PlayerVinyl>
   late final AnimationController _rotationController;
 
   Duration _position = Duration.zero;
-  Duration _duration = Duration.zero;
   bool _isDragging = false;
   double _dragProgress = 0.0;
   bool _isDragValid = false;
 
   StreamSubscription<Duration>? _positionSubscription;
-  StreamSubscription<Duration>? _durationSubscription;
   MouseCursor _cursor = MouseCursor.defer;
 
   @override
@@ -42,36 +40,15 @@ class _PlayerVinylState extends State<PlayerVinyl>
 
     final repo = context.read<PlaybackRepository>();
 
-    // Get initial values
     repo.getCurrentPosition().then((pos) {
       if (mounted && pos != null && !_isDragging) {
-        setState(() {
-          _position = pos;
-        });
-      }
-    });
-
-    repo.getDuration().then((dur) {
-      if (mounted && dur != null) {
-        setState(() {
-          _duration = dur;
-        });
+        setState(() => _position = pos);
       }
     });
 
     _positionSubscription = repo.onPositionChanged.listen((pos) {
       if (mounted && !_isDragging) {
-        setState(() {
-          _position = pos;
-        });
-      }
-    });
-
-    _durationSubscription = repo.onDurationChanged.listen((dur) {
-      if (mounted) {
-        setState(() {
-          _duration = dur;
-        });
+        setState(() => _position = pos);
       }
     });
   }
@@ -80,7 +57,6 @@ class _PlayerVinylState extends State<PlayerVinyl>
   void dispose() {
     _rotationController.dispose();
     _positionSubscription?.cancel();
-    _durationSubscription?.cancel();
     super.dispose();
   }
 
@@ -142,9 +118,11 @@ class _PlayerVinylState extends State<PlayerVinyl>
   }
 
   void _handleGestureEnd() {
-    if (_isDragValid && _isDragging && _duration.inMilliseconds > 0) {
+    final songDuration = context.read<PlaybackBloc>().state.songDuration;
+
+    if (_isDragValid && _isDragging && songDuration.inMilliseconds > 0) {
       final seekPosition = Duration(
-        milliseconds: (_dragProgress * _duration.inMilliseconds).round(),
+        milliseconds: (_dragProgress * songDuration.inMilliseconds).round(),
       );
       context.read<PlaybackBloc>().add(PlaybackSeek(seekPosition));
       setState(() {
@@ -189,145 +167,149 @@ class _PlayerVinylState extends State<PlayerVinyl>
     final center = Offset(outerWidth / 2, outerHeight / 2);
     final radius = size / 2 + 18;
 
-    final displayProgress = _isDragging
-        ? _dragProgress
-        : (_duration.inMilliseconds > 0
-              ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(
-                  0.0,
-                  1.0,
-                )
-              : 0.0);
+    return BlocBuilder<PlaybackBloc, PlaybackState>(
+      buildWhen: (previous, current) =>
+          previous.songDuration != current.songDuration,
+      builder: (context, state) {
+        final songDuration = state.songDuration;
+        final displayProgress = _isDragging
+            ? _dragProgress
+            : (songDuration.inMilliseconds > 0
+                  ? (_position.inMilliseconds / songDuration.inMilliseconds)
+                        .clamp(0.0, 1.0)
+                  : 0.0);
 
-    final displayPosition = _isDragging
-        ? Duration(
-            milliseconds: (_dragProgress * _duration.inMilliseconds).round(),
-          )
-        : _position;
+        final displayPosition = _isDragging
+            ? Duration(
+                milliseconds: (_dragProgress * songDuration.inMilliseconds)
+                    .round(),
+              )
+            : _position;
 
-    return BlocListener<PlaybackBloc, PlaybackState>(
-      listenWhen: (previous, current) => previous.status != current.status,
-      listener: (context, state) {
-        if (state.status == PlaybackStatus.playing) {
-          _rotationController.repeat();
-        } else {
-          _rotationController.stop();
-        }
-      },
-      child: BlocBuilder<PlaybackBloc, PlaybackState>(
-        builder: (context, state) {
-          // Sync rotation controller state
-          if (state.status == PlaybackStatus.playing &&
-              !_rotationController.isAnimating) {
-            _rotationController.repeat();
-          } else if (state.status != PlaybackStatus.playing &&
-              _rotationController.isAnimating) {
-            _rotationController.stop();
-          }
+        return BlocListener<PlaybackBloc, PlaybackState>(
+          listenWhen: (previous, current) => previous.status != current.status,
+          listener: (context, state) {
+            if (state.status == PlaybackStatus.playing) {
+              _rotationController.repeat();
+            } else {
+              _rotationController.stop();
+            }
+          },
+          child: BlocBuilder<PlaybackBloc, PlaybackState>(
+            buildWhen: (previous, current) =>
+                previous.status != current.status ||
+                previous.song != current.song,
+            builder: (context, state) {
+              if (state.status == PlaybackStatus.playing &&
+                  !_rotationController.isAnimating) {
+                _rotationController.repeat();
+              } else if (state.status != PlaybackStatus.playing &&
+                  _rotationController.isAnimating) {
+                _rotationController.stop();
+              }
 
-          final song = state.song;
+              final song = state.song;
 
-          return SizedBox(
-            width: outerWidth,
-            height: outerHeight,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // 1. Semi-Circular Slider track & thumb (captures gesture inputs)
-                Positioned.fill(
-                  child: MouseRegion(
-                    cursor: _cursor,
-                    onHover: (event) => _handleHover(event.localPosition, size),
-                    onExit: (_) {
-                      setState(() {
-                        _cursor = MouseCursor.defer;
-                      });
-                    },
-                    child: GestureDetector(
-                      onPanStart: (details) =>
-                          _handleGesture(details.localPosition, size),
-                      onPanUpdate: (details) =>
-                          _handleGesture(details.localPosition, size),
-                      onPanEnd: (_) => _handleGestureEnd(),
-                      onTapDown: (details) => _handleGesture(
-                        details.localPosition,
-                        size,
-                        isTap: true,
-                      ),
-                      onTapUp: (_) => _handleGestureEnd(),
-                      behavior: HitTestBehavior.opaque,
-                      child: CustomPaint(
-                        painter: SemiCircularSliderPainter(
-                          progress: displayProgress,
-                          trackColor: MusicColors.progressBarColor,
-                          progressColor: const Color(0xFFDDDDDD),
-                          thumbColor: Colors.white,
-                          radius: radius,
+              return SizedBox(
+                width: outerWidth,
+                height: outerHeight,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // 1. Slider
+                    Positioned.fill(
+                      child: MouseRegion(
+                        cursor: _cursor,
+                        onHover: (event) =>
+                            _handleHover(event.localPosition, size),
+                        onExit: (_) =>
+                            setState(() => _cursor = MouseCursor.defer),
+                        child: GestureDetector(
+                          onPanStart: (details) =>
+                              _handleGesture(details.localPosition, size),
+                          onPanUpdate: (details) =>
+                              _handleGesture(details.localPosition, size),
+                          onPanEnd: (_) => _handleGestureEnd(),
+                          onTapDown: (details) => _handleGesture(
+                            details.localPosition,
+                            size,
+                            isTap: true,
+                          ),
+                          onTapUp: (_) => _handleGestureEnd(),
+                          behavior: HitTestBehavior.opaque,
+                          child: CustomPaint(
+                            painter: SemiCircularSliderPainter(
+                              progress: displayProgress,
+                              trackColor: MusicColors.progressBarColor,
+                              progressColor: const Color(0xFFDDDDDD),
+                              thumbColor: Colors.white,
+                              radius: radius,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-                // 2. Center Vinyl Artwork
-                Center(
-                  child: SizedBox(
-                    width: size,
-                    height: size,
-                    child: RotationTransition(
-                      turns: _rotationController,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Image.asset(
-                            MusicIcons.playerDisc,
-                            width: size,
-                            height: size,
-                            fit: BoxFit.cover,
+                    // 2. Vinyl
+                    Center(
+                      child: SizedBox(
+                        width: size,
+                        height: size,
+                        child: RotationTransition(
+                          turns: _rotationController,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.asset(
+                                MusicIcons.playerDisc,
+                                width: size,
+                                height: size,
+                                fit: BoxFit.cover,
+                              ),
+                              ClipOval(
+                                child: _buildArtworkWidget(
+                                  song?.artworkPath,
+                                  size * 0.35,
+                                ),
+                              ),
+                            ],
                           ),
-                          ClipOval(
-                            child: _buildArtworkWidget(
-                              song?.artworkPath,
-                              size * 0.35,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
 
-                // 3. Time Labels: Left (Current) and Right (Total Duration)
-                // Left text right-aligned 8 pixels to the left of the start point of the slider
-                Positioned(
-                  right: outerWidth - (center.dx - radius) - 12,
-                  top: center.dy - 20,
-                  child: Text(
-                    _formatDuration(displayPosition),
-                    style: const TextStyle(
-                      color: MusicColors.titleColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    // 3. Time labels
+                    Positioned(
+                      right: outerWidth - (center.dx - radius) - 12,
+                      top: center.dy - 20,
+                      child: Text(
+                        _formatDuration(displayPosition),
+                        style: const TextStyle(
+                          color: MusicColors.titleColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                // Right text left-aligned 8 pixels to the right of the end point of the slider
-                Positioned(
-                  left: center.dx + radius - 12,
-                  top: center.dy - 20,
-                  child: Text(
-                    _formatDuration(_duration),
-                    style: const TextStyle(
-                      color: MusicColors.titleColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                    Positioned(
+                      left: center.dx + radius - 12,
+                      top: center.dy - 20,
+                      child: Text(
+                        _formatDuration(songDuration),
+                        style: const TextStyle(
+                          color: MusicColors.titleColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
