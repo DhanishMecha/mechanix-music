@@ -11,7 +11,18 @@ import 'package:mechanix_music/features/music/data/repository/song_repository.da
 import 'package:mechanix_music/objectbox.g.dart';
 
 class SongRepositoryImpl extends SongRepository {
-  final FileScannerService _fileScannerService = FileScannerService();
+  SongRepositoryImpl({
+    FileScannerService? fileScannerService,
+    Store? store,
+    String Function()? musicDirectoryProvider,
+  }) : _fileScannerService = fileScannerService ?? FileScannerService(),
+       _musicDirectoryProvider = musicDirectoryProvider ?? getMusicDirectory,
+       _store = store {
+    if (store != null) _box = store.box<SongModel>();
+  }
+
+  final FileScannerService _fileScannerService;
+  final String Function() _musicDirectoryProvider;
 
   Store? _store;
   Box<SongModel>? _box;
@@ -80,7 +91,7 @@ class SongRepositoryImpl extends SongRepository {
   Future<bool> syncInitialSongLibrary() async {
     try {
       await ensureStoreConnected();
-      final musicDir = getMusicDirectory();
+      final musicDir = _musicDirectoryProvider();
 
       final diskMap = await _fileScannerService.scanDirectory(musicDir);
 
@@ -171,7 +182,7 @@ class SongRepositoryImpl extends SongRepository {
 
   void _startWatcher() {
     _watcherSubscription?.cancel();
-    final musicDir = getMusicDirectory();
+    final musicDir = _musicDirectoryProvider();
     _watcherSubscription = Directory(musicDir).watch(recursive: false).listen((
       event,
     ) {

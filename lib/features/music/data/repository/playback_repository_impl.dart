@@ -3,7 +3,11 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:mechanix_music/features/music/data/repository/playback_repository.dart';
 
 class PlaybackRepositoryImpl extends PlaybackRepository {
-  final _audioPlayer = AudioPlayer();
+  PlaybackRepositoryImpl({AudioPlayer? audioPlayer})
+    : _audioPlayer = audioPlayer ?? AudioPlayer();
+
+  final AudioPlayer _audioPlayer;
+
   @override
   bool get isPlaying => _audioPlayer.state == PlayerState.playing;
 

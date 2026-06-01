@@ -1,5 +1,3 @@
-import 'dart:io' as io;
-
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +8,11 @@ import 'package:mechanix_music/features/browse_music/data/repository/browse_repo
 import 'package:path/path.dart' as p;
 
 class BrowseRepositoryImpl implements BrowseRepository {
+  BrowseRepositoryImpl({FileSystem? fileSystem})
+    : _fs = fileSystem ?? const LocalFileSystem();
+
+  final FileSystem _fs;
+
   @override
   Future<List<BrowseFolderItem>> getMountedDrives() async {
     final drives = <BrowseFolderItem>[];
@@ -23,7 +26,7 @@ class BrowseRepositoryImpl implements BrowseRepository {
     // This avoids shelling out to external commands which is better
     // for embedded devices with limited process-spawn overhead.
     try {
-      final mounts = await io.File('/proc/mounts').readAsString();
+      final mounts = await _fs.file('/proc/mounts').readAsString();
       for (final line in mounts.split('\n')) {
         if (line.isEmpty) continue;
         final parts = line.split(' ');
@@ -58,8 +61,7 @@ class BrowseRepositoryImpl implements BrowseRepository {
     int offset = 0,
     int limit = 30,
   }) async {
-    final fs = const LocalFileSystem();
-    final dir = fs.directory(directoryPath);
+    final dir = _fs.directory(directoryPath);
     if (!await dir.exists()) {
       return (entries: const <FileSystemEntry>[], hasMore: false);
     }

@@ -362,7 +362,7 @@ class SemiCircularSliderPainter extends CustomPainter {
     if (progress > 0) {
       final progressPaint = Paint()
         ..shader = LinearGradient(
-          colors: [progressColor.withOpacity(0.5), progressColor],
+          colors: [progressColor.withValues(alpha: 0.5), progressColor],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ).createShader(rect)
@@ -382,7 +382,7 @@ class SemiCircularSliderPainter extends CustomPainter {
 
     // Draw outer thumb glow
     final thumbGlowPaint = Paint()
-      ..color = progressColor.withOpacity(0.3)
+      ..color = progressColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(thumbCenter, 10.0, thumbGlowPaint);
 
