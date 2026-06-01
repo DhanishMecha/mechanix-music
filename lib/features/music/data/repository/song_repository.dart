@@ -6,4 +6,5 @@ abstract class SongRepository {
   Future<List<SongModel>> getSongs({required int offset, required int limit});
   Future<int> getSongCount();
   Stream<SongChange> get onSongChanged;
+  Future<void> addSongsByPaths(List<String> paths);
 }

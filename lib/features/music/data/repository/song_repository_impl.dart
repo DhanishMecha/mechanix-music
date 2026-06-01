@@ -4,6 +4,7 @@ import 'package:mechanix_music/core/exceptions/app_exceptions.dart';
 import 'package:mechanix_music/core/services/file_scanner_service.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/constants.dart';
+import 'package:mechanix_music/core/utils/helper.dart';
 import 'package:mechanix_music/features/music/data/models/song_change.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 import 'package:mechanix_music/features/music/data/repository/song_repository.dart';
@@ -79,10 +80,9 @@ class SongRepositoryImpl extends SongRepository {
   Future<bool> syncInitialSongLibrary() async {
     try {
       await ensureStoreConnected();
+      final musicDir = getMusicDirectory();
 
-      final diskMap = await _fileScannerService.scanDirectory(
-        Constants.musicDir,
-      );
+      final diskMap = await _fileScannerService.scanDirectory(musicDir);
 
       final incomingSongs = diskMap.values.toList();
 
@@ -93,7 +93,7 @@ class SongRepositoryImpl extends SongRepository {
 
       AppLogger.i(
         '[SongRepository] Synced ${incomingSongs.length} songs from '
-        '${Constants.musicDir}',
+        '$musicDir',
       );
 
       _startWatcher();
@@ -130,40 +130,77 @@ class SongRepositoryImpl extends SongRepository {
     return _box!.count();
   }
 
+  @override
+  Future<void> addSongsByPaths(List<String> paths) async {
+    if (paths.isEmpty) return;
+    await ensureStoreConnected();
+
+    // Single bulk query — ObjectBox checks all paths in one index scan.
+    final existingPaths = _box!
+        .query(SongModel_.path.oneOf(paths))
+        .build()
+        .find()
+        .map((s) => s.path)
+        .toSet();
+
+    final newPaths = paths.where((p) => !existingPaths.contains(p)).toList();
+
+    AppLogger.i(
+      '[SongRepository] ${existingPaths.length} already in library, '
+      '${newPaths.length} to import',
+    );
+
+    for (final path in newPaths) {
+      try {
+        final song = await _fileScannerService.buildSongModel(path);
+        if (song == null) {
+          AppLogger.i('[SongRepository] Could not build model for: $path');
+          continue;
+        }
+
+        _box!.put(song);
+        AppLogger.i('[SongRepository] Added to library: ${song.title}');
+        _onSongChanged.add(SongChange(type: SongChangeType.upsert, song: song));
+      } catch (e) {
+        AppLogger.e('[SongRepository] addSongsByPaths failed for $path: $e');
+      }
+    }
+  }
+
   // ── Watcher ──────────────────────────────────────────────────────────────
 
   void _startWatcher() {
     _watcherSubscription?.cancel();
+    final musicDir = getMusicDirectory();
+    _watcherSubscription = Directory(musicDir).watch(recursive: false).listen((
+      event,
+    ) {
+      if (!isAudioFile(event.path)) return;
 
-    _watcherSubscription = Directory(Constants.musicDir)
-        .watch(recursive: false)
-        .listen((event) {
-          if (!isAudioFile(event.path)) return;
+      switch (event.type) {
+        case FileSystemEvent.create:
+        case FileSystemEvent.modify:
+          _debounce(event.path, () => _onUpsert(event.path));
 
-          switch (event.type) {
-            case FileSystemEvent.create:
-            case FileSystemEvent.modify:
-              _debounce(event.path, () => _onUpsert(event.path));
+        case FileSystemEvent.delete:
+          // Cancel any pending debounce for this path and act immediately
+          _debounceTimers[event.path]?.cancel();
+          _debounceTimers.remove(event.path);
+          _onDelete(event.path);
 
-            case FileSystemEvent.delete:
-              // Cancel any pending debounce for this path and act immediately
-              _debounceTimers[event.path]?.cancel();
-              _debounceTimers.remove(event.path);
-              _onDelete(event.path);
+        case FileSystemEvent.move:
+          final moveEvent = event as FileSystemMoveEvent;
+          final destination = moveEvent.destination;
+          if (destination == null) return;
 
-            case FileSystemEvent.move:
-              final moveEvent = event as FileSystemMoveEvent;
-              final destination = moveEvent.destination;
-              if (destination == null) return;
+          // Cancel pending debounce for old path and act immediately
+          _debounceTimers[moveEvent.path]?.cancel();
+          _debounceTimers.remove(moveEvent.path);
+          _onMove(oldPath: moveEvent.path, newPath: destination);
+      }
+    });
 
-              // Cancel pending debounce for old path and act immediately
-              _debounceTimers[moveEvent.path]?.cancel();
-              _debounceTimers.remove(moveEvent.path);
-              _onMove(oldPath: moveEvent.path, newPath: destination);
-          }
-        });
-
-    AppLogger.i('[FileWatcher] Watching ${Constants.musicDir}');
+    AppLogger.i('[FileWatcher] Watching $musicDir');
   }
 
   void _debounce(String path, void Function() action) {

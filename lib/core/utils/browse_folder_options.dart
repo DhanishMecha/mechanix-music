@@ -6,7 +6,7 @@ import 'package:mechanix_music/features/browse_music/data/models/browse_folder_i
 final List<BrowseFolderItem> browseFolderOptions = [
   BrowseFolderItem(
     icon: Icons.home_outlined,
-    title: 'Home directory',
+    title: 'Home',
     path: Platform.environment['HOME'] ?? '/home',
   ),
   BrowseFolderItem(

@@ -19,6 +19,7 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     on<SongLoadMore>(_onSongLoadMore);
     on<SongUpsert>(_onSongUpsert);
     on<SongDelete>(_onSongDelete);
+    on<SongAddByPaths>(_onSongAddByPaths);
 
     _songChangedSub = songRepository.onSongChanged.listen((change) {
       switch (change.type) {
@@ -106,6 +107,22 @@ class SongBloc extends Bloc<SongEvent, SongState> {
 
     AppLogger.i('[SongBloc] Removed from state: ${event.song.path}');
     emit(SongLoaded(songs: songs, hasMore: current.hasMore));
+  }
+
+  Future<void> _onSongAddByPaths(
+    SongAddByPaths event,
+    Emitter<SongState> emit,
+  ) async {
+    if (event.paths.isEmpty) return;
+
+    AppLogger.i('[SongBloc] Adding ${event.paths.length} song(s) by path');
+
+    try {
+      await songRepository.addSongsByPaths(event.paths);
+      AppLogger.i('[SongBloc] SongAddByPaths completed');
+    } catch (e) {
+      AppLogger.e('[SongBloc] SongAddByPaths failed: $e');
+    }
   }
 
   Future<void> _fetchPage(

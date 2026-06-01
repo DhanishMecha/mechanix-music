@@ -31,3 +31,11 @@ final class SongDelete extends SongEvent {
   @override
   List<Object?> get props => [song];
 }
+
+final class SongAddByPaths extends SongEvent {
+  final List<String> paths;
+  const SongAddByPaths(this.paths);
+
+  @override
+  List<Object?> get props => [paths];
+}

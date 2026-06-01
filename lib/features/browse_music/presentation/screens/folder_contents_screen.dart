@@ -11,6 +11,8 @@ import 'package:mechanix_music/features/browse_music/presentation/widgets/folder
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
+import 'package:mechanix_music/features/music/bloc/song_bloc.dart';
+import 'package:mechanix_music/features/music/bloc/song_event.dart';
 
 import '../widgets/folder_contents_screen/breadcrumbs_header.dart';
 import '../widgets/folder_contents_screen/selection_bottom_bar.dart';
@@ -65,13 +67,26 @@ class _FolderContentsScreenState extends State<FolderContentsScreen> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
-  void _playFile(FileSystemEntry selectedEntry, List<FileSystemEntry> allEntries) {
+  void _playFile(
+    FileSystemEntry selectedEntry,
+    List<FileSystemEntry> allEntries,
+  ) {
     final audioEntries = allEntries.where((e) => !e.isDirectory).toList();
 
     final songModels = audioEntries.map((e) {
@@ -135,12 +150,14 @@ class _FolderContentsScreenState extends State<FolderContentsScreen> {
       ),
     );
 
-    // await songRepository.addSongsByPaths(pathsToSave);
+    context.read<SongBloc>().add(SongAddByPaths(pathsToSave));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Successfully saved ${pathsToSave.length} song(s) to library'),
+          content: Text(
+            'Queued ${pathsToSave.length} song(s) for library import',
+          ),
           backgroundColor: Colors.green.shade900,
           duration: const Duration(seconds: 2),
         ),
@@ -160,9 +177,7 @@ class _FolderContentsScreenState extends State<FolderContentsScreen> {
             child: Column(
               children: [
                 if (state.isSelectionMode)
-                  SelectionHeader(
-                    selectedCount: state.selectedPaths.length,
-                  )
+                  SelectionHeader(selectedCount: state.selectedPaths.length)
                 else
                   BreadcrumbsHeader(
                     currentPath: state.directoryPath,
