@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 import 'package:mechanix_music/features/browse_music/presentation/screens/browse_music_screen.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/browse_music_top_bar.dart';
 import 'package:mechanix_music/features/music/presentation/widgets/music/music_bottom_bar.dart';
@@ -23,17 +24,22 @@ class _MusicScreenState extends State<MusicScreen> {
     Center(child: BrowseMusicScreen()),
   ];
 
-  final List<PreferredSizeWidget> _appBars = [
-    AppBar(title: const Text("Now Playing")),
-    AppBar(title: const Text("Search")),
-    AppBar(title: const Text("Tracks")),
-    AppBar(title: const BrowseMusicTopBar()),
-  ];
+  PreferredSizeWidget _buildAppBar(AppLocalizations l10n) {
+    return switch (_currentIndex) {
+      0 => AppBar(title: Text(l10n.nowPlaying)),
+      1 => AppBar(title: Text(l10n.search)),
+      2 => AppBar(title: Text(l10n.tracks)),
+      3 => AppBar(title: const BrowseMusicTopBar()),
+      _ => AppBar(title: Text(l10n.tracks)),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: _appBars[_currentIndex],
+      appBar: _buildAppBar(l10n),
       extendBodyBehindAppBar: false,
       body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: MusicBottomBar(

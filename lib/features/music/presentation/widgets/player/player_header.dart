@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
@@ -18,8 +19,9 @@ class PlayerHeader extends StatelessWidget {
           child: BlocSelector<PlaybackBloc, PlaybackState, SongModel?>(
             selector: (state) => state.song,
             builder: (context, currentSong) {
-              final title = currentSong?.title ?? 'Now Playing';
-              final artist = currentSong?.artist ?? 'Unknown';
+              final localizations = AppLocalizations.of(context);
+              final title = currentSong?.title ?? localizations!.nowPlaying;
+              final artist = currentSong?.artist ?? localizations!.unknown;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

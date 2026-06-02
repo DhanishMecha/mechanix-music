@@ -1,6 +1,6 @@
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
-enum SongChangeType { upsert, delete }
 
 class SongChange {
   final SongChangeType type;

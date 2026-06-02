@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 
 class SelectionHeader extends StatelessWidget {
   final int selectedCount;
@@ -10,7 +11,10 @@ class SelectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = selectedCount == 0 ? 'No selection' : '$selectedCount selected';
+    final localizations = AppLocalizations.of(context);
+    final title = selectedCount == 0
+        ? localizations!.noSelection
+        : localizations!.selectedCount(selectedCount);
 
     return Container(
       height: 64,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 
 class FolderErrorState extends StatelessWidget {
   final String error;
@@ -12,6 +13,7 @@ class FolderErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -33,7 +35,7 @@ class FolderErrorState extends StatelessWidget {
                 side: const BorderSide(color: Color(0xFF2D2D2D)),
               ),
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child: Text(localizations!.retry),
             ),
           ],
         ),

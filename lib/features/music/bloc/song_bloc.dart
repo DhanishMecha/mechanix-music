@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/constants.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/features/music/bloc/song_event.dart';
 import 'package:mechanix_music/features/music/bloc/song_state.dart';
 import 'package:mechanix_music/features/music/data/models/song_change.dart';
@@ -45,12 +46,20 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     _currentOffset = 0;
 
     try {
-      AppLogger.i('[SongBloc] Syncing library then loading first page');
+      AppLogger.i('[SongBloc] Syncing library');
       await songRepository.syncInitialSongLibrary();
+    } catch (e) {
+      AppLogger.e('[SongBloc] Syncing library failed: $e');
+      emit(const SongError(SongErrorType.syncFailed));
+      return;
+    }
+
+    try {
+      AppLogger.i('[SongBloc] Loading first page');
       await _fetchPage(emit);
     } catch (e) {
-      AppLogger.e('[SongBloc] SongInitialized failed: $e');
-      emit(SongError(e.toString()));
+      AppLogger.e('[SongBloc] Loading first page failed: $e');
+      emit(const SongError(SongErrorType.loadFailed));
     }
   }
 
@@ -58,19 +67,21 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     SongLoadMore event,
     Emitter<SongState> emit,
   ) async {
-    final current = state;
-    if (current is! SongLoaded || !current.hasMore || current.isLoadingMore) {
-      return;
-    }
-
-    final previousSongs = current.songs;
-    emit(SongLoaded(songs: previousSongs, hasMore: true, isLoadingMore: true));
-
     try {
+      final current = state;
+      if (current is! SongLoaded || !current.hasMore || current.isLoadingMore) {
+        return;
+      }
+
+      final previousSongs = current.songs;
+      emit(
+        SongLoaded(songs: previousSongs, hasMore: true, isLoadingMore: true),
+      );
+
       await _fetchPage(emit, previousSongs: previousSongs);
     } catch (e) {
       AppLogger.e('[SongBloc] SongLoadMore failed: $e');
-      emit(SongError(e.toString()));
+      emit(const SongError(SongErrorType.loadFailed));
     }
   }
 
@@ -113,11 +124,11 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     SongAddByPaths event,
     Emitter<SongState> emit,
   ) async {
-    if (event.paths.isEmpty) return;
-
-    AppLogger.i('[SongBloc] Adding ${event.paths.length} song(s) by path');
-
     try {
+      if (event.paths.isEmpty) return;
+
+      AppLogger.i('[SongBloc] Adding ${event.paths.length} song(s) by path');
+
       await songRepository.addSongsByPaths(event.paths);
       AppLogger.i('[SongBloc] SongAddByPaths completed');
     } catch (e) {
@@ -129,14 +140,29 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     Emitter<SongState> emit, {
     List<SongModel> previousSongs = const [],
   }) async {
-    final page = await songRepository.getSongs(
-      offset: _currentOffset,
-      limit: Constants.pageSize,
-    );
+    List<SongModel> page;
+    try {
+      page = await songRepository.getSongs(
+        offset: _currentOffset,
+        limit: Constants.pageSize,
+      );
+    } catch (e) {
+      AppLogger.e('[SongBloc] getSongs failed: $e');
+      emit(const SongError(SongErrorType.loadFailed));
+      rethrow;
+    }
 
     _currentOffset += page.length;
 
-    final totalCount = await songRepository.getSongCount();
+    int totalCount;
+    try {
+      totalCount = await songRepository.getSongCount();
+    } catch (e) {
+      AppLogger.e('[SongBloc] getSongCount failed: $e');
+      emit(const SongError(SongErrorType.countFailed));
+      rethrow;
+    }
+
     final hasMore = _currentOffset < totalCount;
 
     AppLogger.i(

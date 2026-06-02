@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 import 'package:mechanix_music/core/utils/app_routes.dart';
 import 'package:mechanix_music/core/utils/theme.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
@@ -63,6 +64,9 @@ class MusicApp extends StatelessWidget {
       themeMode: ThemeMode.dark,
       darkTheme: AppTheme.dark,
       theme: AppTheme.light,
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       routes: {AppRoutes.player: (context) => const PlayerScreen()},
       home: const MusicScreen(),
     );

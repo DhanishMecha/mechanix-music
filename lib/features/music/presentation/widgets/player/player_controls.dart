@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/core/utils/icons.dart';
 import 'package:mechanix_music/core/widgets/music_button.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';

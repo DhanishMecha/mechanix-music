@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
 sealed class SongState extends Equatable {
@@ -32,10 +33,10 @@ final class SongLoaded extends SongState {
 }
 
 final class SongError extends SongState {
-  final String message;
+  final SongErrorType errorType;
 
-  const SongError(this.message);
+  const SongError(this.errorType);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [errorType];
 }

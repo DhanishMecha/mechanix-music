@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
 import 'package:mechanix_music/features/music/bloc/song_bloc.dart';
@@ -12,7 +14,6 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
   final PlaybackRepository _repo;
   final SongBloc _songBloc;
   late final StreamSubscription<SongState> _songSub;
-  static const _loadMoreThreshold = 5;
 
   PlaybackBloc(this._repo, this._songBloc)
     : super(
@@ -44,25 +45,6 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
         add(PlaybackDurationUpdated(duration));
         return;
       }
-
-      // audioplayers emitted a bad value — retry up to 10 times
-      AppLogger.i('[PlaybackBloc] Invalid duration received, retrying...');
-      for (var attempt = 1; attempt <= 10; attempt++) {
-        await Future.delayed(const Duration(milliseconds: 150));
-        final retried = await _repo.getDuration();
-        if (retried != null && retried.inMilliseconds > 0) {
-          AppLogger.i(
-            '[PlaybackBloc] Duration resolved on attempt $attempt: $retried',
-          );
-          add(PlaybackDurationUpdated(retried));
-          return;
-        }
-        AppLogger.i('[PlaybackBloc] Attempt $attempt failed — got $retried');
-      }
-
-      AppLogger.e(
-        '[PlaybackBloc] Could not resolve duration after 10 attempts',
-      );
     });
   }
 
@@ -152,7 +134,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       // Remaining songs after this next play
       final remaining = state.playbackList.length - 1 - nextIndex;
 
-      if (remaining <= _loadMoreThreshold) {
+      if (remaining <= Constants.loadMoreSongsThreshold) {
         _songBloc.add(const SongLoadMore());
       }
 

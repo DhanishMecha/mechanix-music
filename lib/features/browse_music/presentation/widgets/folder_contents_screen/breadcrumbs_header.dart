@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 import 'package:path/path.dart' as p;
 
 class BreadcrumbsHeader extends StatelessWidget {
@@ -19,8 +20,12 @@ class BreadcrumbsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final browseMusicText = localizations!.browseMusicBreadcrumb;
+    final rootText = localizations.root;
+
     final segments = <({String name, String path})>[];
-    segments.add((name: 'Browse music', path: 'pop'));
+    segments.add((name: browseMusicText, path: 'pop'));
 
     if (currentPath.startsWith(initialPath)) {
       final relative = currentPath.substring(initialPath.length);
@@ -34,7 +39,7 @@ class BreadcrumbsHeader extends StatelessWidget {
         segments.add((name: part, path: current));
       }
     } else {
-      segments.add((name: 'Root', path: '/'));
+      segments.add((name: rootText, path: '/'));
       if (currentPath != '/') {
         final parts = currentPath.split('/').where((s) => s.isNotEmpty).toList();
         String current = '';

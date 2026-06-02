@@ -46,7 +46,7 @@ class _TrackListState extends State<TrackList> {
   Widget build(BuildContext context) {
     return ListView.builder(
       controller: _scrollController,
-      prototypeItem: TrackTile(song: widget.songs.first),
+      prototypeItem: const SizedBox(height: 93,),
       itemCount: widget.songs.length,
       itemBuilder: (context, index) {
         if (index == widget.songs.length) {

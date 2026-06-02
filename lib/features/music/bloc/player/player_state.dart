@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 
-enum PlaybackStatus { initial, loading, playing, paused, stopped, failure }
 
 class PlaybackState extends Equatable {
   final PlaybackStatus status;
