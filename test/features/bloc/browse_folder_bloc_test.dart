@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_state.dart';
@@ -47,8 +48,13 @@ void main() {
     required List<FileSystemEntry> entries,
     required bool hasMore,
   }) {
-    when(() => repository.listDirectory(path, offset: offset, limit: 30))
-        .thenAnswer((_) async => (entries: entries, hasMore: hasMore));
+    when(
+      () => repository.listDirectory(
+        path,
+        offset: offset,
+        limit: Constants.pageSize,
+      ),
+    ).thenAnswer((_) async => (entries: entries, hasMore: hasMore));
   }
 
   test('initial state reflects the constructor arguments', () {
@@ -61,8 +67,8 @@ void main() {
   group('BrowseFolderLoad', () {
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'emits [loading, loaded] on success',
-      setUp: () => stubList(dirPath,
-          offset: 0, entries: [fileA, fileB], hasMore: true),
+      setUp: () =>
+          stubList(dirPath, offset: 0, entries: [fileA, fileB], hasMore: true),
       build: buildBloc,
       act: (bloc) => bloc.add(const BrowseFolderLoad()),
       expect: () => [
@@ -70,15 +76,18 @@ void main() {
         base.copyWith(entries: [fileA, fileB], isLoading: false, hasMore: true),
       ],
       verify: (_) => verify(
-        () => repository.listDirectory(dirPath, offset: 0, limit: 30),
+        () => repository.listDirectory(dirPath, offset: 0, limit: Constants.pageSize),
       ).called(1),
     );
 
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'emits [loading, error] when the repository throws',
       setUp: () => when(
-        () => repository.listDirectory(any(),
-            offset: any(named: 'offset'), limit: any(named: 'limit')),
+        () => repository.listDirectory(
+          any(),
+          offset: any(named: 'offset'),
+          limit: any(named: 'limit'),
+        ),
       ).thenThrow(Exception('disk error')),
       build: buildBloc,
       act: (bloc) => bloc.add(const BrowseFolderLoad()),
@@ -108,15 +117,22 @@ void main() {
         ),
       ],
       verify: (_) => verify(
-        () => repository.listDirectory(dirPath, offset: 2, limit: 30),
+        () => repository.listDirectory(
+          dirPath,
+          offset: 2,
+          limit: Constants.pageSize,
+        ),
       ).called(1),
     );
 
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'recovers (clears isLoadingMore, keeps entries) when the fetch throws',
       setUp: () => when(
-        () => repository.listDirectory(any(),
-            offset: any(named: 'offset'), limit: any(named: 'limit')),
+        () => repository.listDirectory(
+          any(),
+          offset: any(named: 'offset'),
+          limit: any(named: 'limit'),
+        ),
       ).thenThrow(Exception('disk error')),
       build: buildBloc,
       seed: () => loaded,
@@ -134,8 +150,11 @@ void main() {
       act: (bloc) => bloc.add(const BrowseFolderLoadMore()),
       expect: () => const <BrowseFolderState>[],
       verify: (_) => verifyNever(
-        () => repository.listDirectory(any(),
-            offset: any(named: 'offset'), limit: any(named: 'limit')),
+        () => repository.listDirectory(
+          any(),
+          offset: any(named: 'offset'),
+          limit: any(named: 'limit'),
+        ),
       ),
     );
 
@@ -146,8 +165,11 @@ void main() {
       act: (bloc) => bloc.add(const BrowseFolderLoadMore()),
       expect: () => const <BrowseFolderState>[],
       verify: (_) => verifyNever(
-        () => repository.listDirectory(any(),
-            offset: any(named: 'offset'), limit: any(named: 'limit')),
+        () => repository.listDirectory(
+          any(),
+          offset: any(named: 'offset'),
+          limit: any(named: 'limit'),
+        ),
       ),
     );
   });
@@ -155,8 +177,8 @@ void main() {
   group('BrowseFolderNavigate', () {
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'resets state, clears selection, and loads the new directory',
-      setUp: () => stubList('/music/sub',
-          offset: 0, entries: [fileC], hasMore: false),
+      setUp: () =>
+          stubList('/music/sub', offset: 0, entries: [fileC], hasMore: false),
       build: buildBloc,
       seed: () => base.copyWith(
         entries: [fileA, fileB],
@@ -189,16 +211,21 @@ void main() {
           folderName: '/',
           isLoading: true,
         ),
-        const BrowseFolderState(directoryPath: '/', folderName: '/')
-            .copyWith(entries: [fileA]),
+        const BrowseFolderState(
+          directoryPath: '/',
+          folderName: '/',
+        ).copyWith(entries: [fileA]),
       ],
     );
 
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'emits an error state when loading the new directory throws',
       setUp: () => when(
-        () => repository.listDirectory(any(),
-            offset: any(named: 'offset'), limit: any(named: 'limit')),
+        () => repository.listDirectory(
+          any(),
+          offset: any(named: 'offset'),
+          limit: any(named: 'limit'),
+        ),
       ).thenThrow(Exception('disk error')),
       build: buildBloc,
       act: (bloc) => bloc.add(const BrowseFolderNavigate('/music/sub')),
@@ -231,10 +258,8 @@ void main() {
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'exits selection mode when no path is provided',
       build: buildBloc,
-      seed: () => base.copyWith(
-        isSelectionMode: true,
-        selectedPaths: {'/music/a.mp3'},
-      ),
+      seed: () =>
+          base.copyWith(isSelectionMode: true, selectedPaths: {'/music/a.mp3'}),
       act: (bloc) => bloc.add(const BrowseFolderSetSelectionMode()),
       expect: () => [
         base.copyWith(isSelectionMode: false, selectedPaths: const {}),
@@ -246,7 +271,8 @@ void main() {
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'adds a path and turns on selection mode',
       build: buildBloc,
-      act: (bloc) => bloc.add(const BrowseFolderToggleSelection('/music/a.mp3')),
+      act: (bloc) =>
+          bloc.add(const BrowseFolderToggleSelection('/music/a.mp3')),
       expect: () => [
         base.copyWith(isSelectionMode: true, selectedPaths: {'/music/a.mp3'}),
       ],
@@ -255,11 +281,10 @@ void main() {
     blocTest<BrowseFolderBloc, BrowseFolderState>(
       'removes the last path and turns off selection mode',
       build: buildBloc,
-      seed: () => base.copyWith(
-        isSelectionMode: true,
-        selectedPaths: {'/music/a.mp3'},
-      ),
-      act: (bloc) => bloc.add(const BrowseFolderToggleSelection('/music/a.mp3')),
+      seed: () =>
+          base.copyWith(isSelectionMode: true, selectedPaths: {'/music/a.mp3'}),
+      act: (bloc) =>
+          bloc.add(const BrowseFolderToggleSelection('/music/a.mp3')),
       expect: () => [
         base.copyWith(isSelectionMode: false, selectedPaths: const {}),
       ],
@@ -272,7 +297,8 @@ void main() {
         isSelectionMode: true,
         selectedPaths: {'/music/a.mp3', '/music/b.mp3'},
       ),
-      act: (bloc) => bloc.add(const BrowseFolderToggleSelection('/music/a.mp3')),
+      act: (bloc) =>
+          bloc.add(const BrowseFolderToggleSelection('/music/a.mp3')),
       expect: () => [
         base.copyWith(isSelectionMode: true, selectedPaths: {'/music/b.mp3'}),
       ],

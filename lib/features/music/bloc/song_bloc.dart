@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/features/music/bloc/song_event.dart';
 import 'package:mechanix_music/features/music/bloc/song_state.dart';
 import 'package:mechanix_music/features/music/data/models/song_change.dart';
@@ -10,7 +11,6 @@ import 'package:mechanix_music/features/music/data/repository/song_repository.da
 class SongBloc extends Bloc<SongEvent, SongState> {
   final SongRepository songRepository;
 
-  static const int _pageSize = 20;
   int _currentOffset = 0;
   StreamSubscription<SongChange>? _songChangedSub;
 
@@ -131,7 +131,7 @@ class SongBloc extends Bloc<SongEvent, SongState> {
   }) async {
     final page = await songRepository.getSongs(
       offset: _currentOffset,
-      limit: _pageSize,
+      limit: Constants.pageSize,
     );
 
     _currentOffset += page.length;

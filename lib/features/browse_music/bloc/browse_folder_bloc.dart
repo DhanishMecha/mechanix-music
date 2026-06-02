@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_state.dart';
 import 'package:mechanix_music/features/browse_music/data/repository/browse_repository.dart';
@@ -26,8 +27,6 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
 
   final BrowseRepository _repository;
 
-  static const int _pageSize = 30;
-
   Future<void> _onLoad(
     BrowseFolderLoad event,
     Emitter<BrowseFolderState> emit,
@@ -38,7 +37,7 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
       final result = await _repository.listDirectory(
         state.directoryPath,
         offset: 0,
-        limit: _pageSize,
+        limit: Constants.pageSize,
       );
 
       emit(
@@ -65,7 +64,7 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
       final result = await _repository.listDirectory(
         state.directoryPath,
         offset: state.entries.length,
-        limit: _pageSize,
+        limit: Constants.pageSize,
       );
 
       emit(
@@ -101,7 +100,7 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
       final result = await _repository.listDirectory(
         event.path,
         offset: 0,
-        limit: _pageSize,
+        limit: Constants.pageSize,
       );
 
       emit(
@@ -122,20 +121,10 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
   ) {
     if (event.path != null) {
       // Enter selection mode with the given path
-      emit(
-        state.copyWith(
-          isSelectionMode: true,
-          selectedPaths: {event.path!},
-        ),
-      );
+      emit(state.copyWith(isSelectionMode: true, selectedPaths: {event.path!}));
     } else {
       // Exit selection mode
-      emit(
-        state.copyWith(
-          isSelectionMode: false,
-          selectedPaths: const {},
-        ),
-      );
+      emit(state.copyWith(isSelectionMode: false, selectedPaths: const {}));
     }
   }
 

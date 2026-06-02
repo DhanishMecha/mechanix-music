@@ -9,4 +9,7 @@ class Constants {
     '.ogg',
     '.opus',
   ];
+  static const int pageSize = 20;
+  static const loadMoreSongsThreshold =
+      5; // to fetch next songs on list when 5 are remain.
 }
