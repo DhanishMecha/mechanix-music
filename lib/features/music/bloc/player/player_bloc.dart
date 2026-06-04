@@ -12,6 +12,7 @@ import 'package:mechanix_music/features/music/data/repository/playback_repositor
 
 class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
   final PlaybackRepository _repo;
+  Timer? _playDebounce; // Handle rapid song clicks efficiently
   final SongBloc _songBloc;
   late final StreamSubscription<SongState> _songSub;
 
@@ -103,18 +104,38 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
   }
 
   Future<void> _onPlay(PlaybackPlay event, Emitter<PlaybackState> emit) async {
+    final index = state.playbackList.indexOf(event.song);
+
+    // Cancel pending debounce
+    _playDebounce?.cancel();
+
+    // Stop old song immediately — no more audio, no stale duration
+    if (_repo.isPlaying) await _repo.stop();
+
+    // UI updates immediately
+    emit(
+      state.copyWith(
+        status: PlaybackStatus.loading,
+        song: event.song,
+        currentIndex: index,
+        songDuration: Duration.zero, // reset stale duration
+      ),
+    );
+
+    final completer =
+        Completer<void>(); // hold the emit state to update on debounce complete
+
+    _playDebounce = Timer(const Duration(milliseconds: 400), () async {
+      try {
+        await _repo.play(event.song.path);
+        completer.complete();
+      } catch (e) {
+        completer.completeError(e);
+      }
+    });
+
     try {
-      final index = state.playbackList.indexOf(event.song);
-
-      emit(
-        state.copyWith(
-          status: PlaybackStatus.loading,
-          song: event.song,
-          currentIndex: index,
-        ),
-      );
-
-      await _repo.play(event.song.path);
+      await completer.future;
       emit(state.copyWith(status: PlaybackStatus.playing));
     } catch (e) {
       emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
@@ -125,57 +146,28 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     PlaybackPlayNext event,
     Emitter<PlaybackState> emit,
   ) async {
-    try {
-      if (!state.hasNext) return;
+    if (!state.hasNext) return;
 
-      final nextIndex = state.currentIndex + 1;
-      final nextSong = state.playbackList[nextIndex];
+    final nextIndex = state.currentIndex + 1;
+    final nextSong = state.playbackList[nextIndex];
 
-      // Remaining songs after this next play
-      final remaining = state.playbackList.length - 1 - nextIndex;
-
-      if (remaining <= Constants.loadMoreSongsThreshold) {
-        _songBloc.add(const SongLoadMore());
-      }
-
-      emit(
-        state.copyWith(
-          status: PlaybackStatus.loading,
-          song: nextSong,
-          currentIndex: nextIndex,
-        ),
-      );
-
-      await _repo.play(nextSong.path);
-      emit(state.copyWith(status: PlaybackStatus.playing));
-    } catch (e) {
-      emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
+    // Remaining songs after this next play
+    final remaining = state.playbackList.length - 1 - nextIndex;
+    if (remaining <= Constants.loadMoreSongsThreshold) {
+      _songBloc.add(const SongLoadMore());
     }
+
+    add(PlaybackPlay(nextSong));
   }
 
   Future<void> _onPlayPrevious(
     PlaybackPlayPrevious event,
     Emitter<PlaybackState> emit,
   ) async {
-    try {
-      if (!state.hasPrevious) return;
+    if (!state.hasPrevious) return;
 
-      final prevIndex = state.currentIndex - 1;
-      final prevSong = state.playbackList[prevIndex];
-
-      emit(
-        state.copyWith(
-          status: PlaybackStatus.loading,
-          song: prevSong,
-          currentIndex: prevIndex,
-        ),
-      );
-
-      await _repo.play(prevSong.path);
-      emit(state.copyWith(status: PlaybackStatus.playing));
-    } catch (e) {
-      emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
-    }
+    final prevSong = state.playbackList[state.currentIndex - 1];
+    add(PlaybackPlay(prevSong));
   }
 
   Future<void> _onPause(
@@ -221,6 +213,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
 
   @override
   Future<void> close() async {
+    _playDebounce?.cancel();
     await _songSub.cancel();
     await _repo.dispose();
     return super.close();

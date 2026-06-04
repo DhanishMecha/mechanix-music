@@ -44,10 +44,14 @@ dependencies:
   show_fps: ^1.1.0
   audioplayers: ^6.6.0
   audioplayers_elinux:
+    # git:
+    #   url: https://github.com/flutter-elinux/flutter-elinux-plugins.git
+    #   path: packages/audioplayers
+    #   ref: main  
     git:
-      url: https://github.com/flutter-elinux/flutter-elinux-plugins.git
+      url: https://github.com/DhanishMecha/flutter-elinux-plugins.git
       path: packages/audioplayers
-      ref: main  
+      ref: feat/audioplayers  
   audiotags: ^1.4.5
   path: ^1.9.1
   bloc: ^9.2.1

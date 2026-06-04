@@ -17,3 +17,18 @@ String songErrorMessage(AppLocalizations l10n, SongErrorType errorType) {
     SongErrorType.unknown => l10n.errorUnknown,
   };
 }
+
+String formatDuration(Duration duration) {
+  if (duration == Duration.zero) return '00:00';
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
+
+  final secondsStr = seconds.toString().padLeft(2, '0');
+  if (hours > 0) {
+    final minutesStr = minutes.toString().padLeft(2, '0');
+    return '$hours:$minutesStr:$secondsStr';
+  } else {
+    return '${minutes.toString().padLeft(2, '0')}:$secondsStr';
+  }
+}

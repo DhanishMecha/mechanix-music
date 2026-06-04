@@ -2,26 +2,29 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/features/browse_music/data/models/browse_folder_item.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 
-final List<BrowseFolderItem> browseFolderOptions = [
+List<BrowseFolderItem> buildBrowseFolderOptions(
+  AppLocalizations localizations,
+) => [
   BrowseFolderItem(
     icon: Icons.home_outlined,
-    title: 'Home',
+    title: localizations.quickHome,
     path: Platform.environment['HOME'] ?? '/home',
   ),
   BrowseFolderItem(
     icon: Icons.access_time,
-    title: 'Recents',
+    title: localizations.quickRecents,
     path: '${Platform.environment['HOME'] ?? '/home'}/Recent',
   ),
   BrowseFolderItem(
     icon: Icons.download_outlined,
-    title: 'Downloads',
+    title: localizations.quickDownloads,
     path: '${Platform.environment['HOME'] ?? '/home'}/Downloads',
   ),
   BrowseFolderItem(
     icon: Icons.description_outlined,
-    title: 'Documents',
+    title: localizations.quickDocuments,
     path: '${Platform.environment['HOME'] ?? '/home'}/Documents',
   ),
 ];

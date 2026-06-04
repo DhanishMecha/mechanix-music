@@ -1,10 +1,16 @@
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:mechanix_music/features/music/data/repository/playback_repository.dart';
 
 class PlaybackRepositoryImpl extends PlaybackRepository {
   PlaybackRepositoryImpl({AudioPlayer? audioPlayer})
-    : _audioPlayer = audioPlayer ?? AudioPlayer();
+    : _audioPlayer = audioPlayer ?? AudioPlayer() {
+    // Replaces default FramePositionUpdater (60 calls/sec) with timer-based (2 calls/sec)
+    _audioPlayer.positionUpdater = TimerPositionUpdater(
+      getPosition: () async =>
+          (await _audioPlayer.getCurrentPosition()) ?? Duration.zero,
+      interval: const Duration(milliseconds: 500),
+    );
+  }
 
   final AudioPlayer _audioPlayer;
 

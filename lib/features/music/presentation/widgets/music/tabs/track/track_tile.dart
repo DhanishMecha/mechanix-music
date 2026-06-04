@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/app_routes.dart';
 import 'package:mechanix_music/core/utils/colors.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/core/utils/icons.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
@@ -44,24 +45,19 @@ class TrackTile extends StatelessWidget {
       ),
       trailing: BlocBuilder<PlaybackBloc, PlaybackState>(
         buildWhen: (previous, current) {
-          final isCurrentSong = current.song?.id == song.id;
-          final wasPreviousSong = previous.song?.id == song.id;
-
-          // Rebuild if this song became active or inactive
-          if (isCurrentSong != wasPreviousSong) return true;
-
-          // Rebuild only if this song is playing and status changed
-          if (isCurrentSong && previous.status != current.status) return true;
-
+          final isNow = current.song?.id == song.id;
+          final wasPrev = previous.song?.id == song.id;
+          if (isNow != wasPrev) return true;
+          if (isNow && previous.status != current.status) return true;
           return false;
         },
         builder: (context, state) {
-          final isCurrentSong = state.song?.id == song.id;
+          if (state.song?.id != song.id) return const SizedBox.shrink();
 
-          if (!isCurrentSong) return const SizedBox();
-
-          return EqualizerIcon(
-            isPlaying: state.status == PlaybackStatus.playing,
+          return RepaintBoundary(
+            child: EqualizerIcon(
+              isPlaying: state.status == PlaybackStatus.playing,
+            ),
           );
         },
       ),
@@ -71,30 +67,51 @@ class TrackTile extends StatelessWidget {
 
 class _ArtworkWidget extends StatelessWidget {
   final String? artworkPath;
-
   const _ArtworkWidget({this.artworkPath});
 
   @override
   Widget build(BuildContext context) {
-    if (artworkPath != null) {
-      final file = File(artworkPath!);
-      if (file.existsSync()) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(50),
-          child: Image.file(
-            file,
-            errorBuilder: (context, error, stackTrace) => _fallback(),
+    const double size = 52.0;
+
+    if (artworkPath != null && artworkPath!.isNotEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: ResizeImage(
+              FileImage(File(artworkPath!)),
+              width: 104,
+              height: 104,
+            ),
+            fit: BoxFit.cover,
+            // Fallback if image data is corrupted
+            onError: (_, _) {
+              _buildFallback();
+            },
           ),
-        );
-      }
+        ),
+      );
     }
-    return _fallback();
+    return _buildFallback();
   }
 
-  Widget _fallback() {
-    return const CircleAvatar(
-      radius: 26,
-      backgroundImage: AssetImage(MusicIcons.artworkIcon),
+  Widget _buildFallback() {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        image: DecorationImage(
+          image: ResizeImage(
+            AssetImage(MusicIcons.artworkIcon),
+            width: 104,
+            height: 104,
+          ),
+          fit: BoxFit.cover,
+        ),
+      ),
     );
   }
 }

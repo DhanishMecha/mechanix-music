@@ -6,6 +6,7 @@ import 'package:mechanix_music/features/browse_music/data/repository/browse_repo
 import 'package:mechanix_music/features/browse_music/presentation/screens/folder_contents_screen.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/browse_folder_tile.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/browse_section_header.dart';
+import 'package:mechanix_music/l10n/music_localizations.dart';
 
 class BrowseMusic extends StatefulWidget {
   const BrowseMusic({super.key});
@@ -46,11 +47,14 @@ class _BrowseMusicState extends State<BrowseMusic> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final quickAccessFolders = buildBrowseFolderOptions(localizations);
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
         // Quick-access folders
-        for (final folder in browseFolderOptions)
+        for (final folder in quickAccessFolders)
           BrowseFolderTile(
             icon: folder.icon,
             title: folder.title,
@@ -59,7 +63,7 @@ class _BrowseMusicState extends State<BrowseMusic> {
 
         // Hard Drive section
         if (_drives.isNotEmpty) ...[
-          const BrowseSectionHeader(title: 'Hard Drive'),
+          BrowseSectionHeader(title: localizations.hardDrive),
           for (final drive in _drives)
             BrowseFolderTile(
               icon: drive.icon,

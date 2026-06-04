@@ -44,19 +44,21 @@ class _TrackListState extends State<TrackList> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      controller: _scrollController,
-      prototypeItem: const SizedBox(height: 93,),
-      itemCount: widget.songs.length,
-      itemBuilder: (context, index) {
-        if (index == widget.songs.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return TrackTile(song: widget.songs[index]);
-      },
+    return RepaintBoundary(
+      child: ListView.builder(
+        controller: _scrollController,
+        prototypeItem: const SizedBox(height: 93),
+        itemCount: widget.songs.length,
+        itemBuilder: (context, index) {
+          if (index == widget.songs.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return TrackTile(song: widget.songs[index]);
+        },
+      ),
     );
   }
 }
