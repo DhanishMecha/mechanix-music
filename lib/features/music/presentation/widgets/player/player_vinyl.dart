@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/features/music/presentation/widgets/player/player_artwork.dart';
 import 'package:mechanix_music/features/music/presentation/widgets/player/player_left_timestamp.dart';
 import 'package:mechanix_music/features/music/presentation/widgets/player/player_right_timestamp.dart';
@@ -9,7 +10,7 @@ class PlayerVinyl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const size = 280.0;
+    const size = Constants.artworkSize;
     const outerWidth = size + 60;
     const outerHeight = size + 40;
     const center = Offset(outerWidth / 2, outerHeight / 2);

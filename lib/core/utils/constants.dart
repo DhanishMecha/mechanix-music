@@ -12,4 +12,6 @@ class Constants {
   static const int pageSize = 20;
   static const loadMoreSongsThreshold =
       5; // to fetch next songs on list when 5 are remain.
+
+  static const double artworkSize = 280.0;
 }

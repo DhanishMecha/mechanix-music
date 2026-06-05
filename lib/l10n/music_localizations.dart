@@ -262,12 +262,6 @@ abstract class AppLocalizations {
   /// **'Failed to add selected songs.'**
   String get errorAddSongsFailed;
 
-  /// No description provided for @errorCountFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to retrieve total song count.'**
-  String get errorCountFailed;
-
   /// No description provided for @errorUnknown.
   ///
   /// In en, this message translates to:

@@ -13,7 +13,6 @@ String songErrorMessage(AppLocalizations l10n, SongErrorType errorType) {
     SongErrorType.syncFailed => l10n.errorSyncFailed,
     SongErrorType.loadFailed => l10n.errorLoadFailed,
     SongErrorType.addSongsFailed => l10n.errorAddSongsFailed,
-    SongErrorType.countFailed => l10n.errorCountFailed,
     SongErrorType.unknown => l10n.errorUnknown,
   };
 }

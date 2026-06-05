@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/colors.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
@@ -10,7 +11,7 @@ import 'package:mechanix_music/features/music/data/repository/playback_repositor
 
 class PlayerSemiCircleSlider extends StatefulWidget {
   final double size;
-  const PlayerSemiCircleSlider({super.key, this.size = 280.0});
+  const PlayerSemiCircleSlider({super.key, this.size = Constants.artworkSize});
 
   @override
   State<PlayerSemiCircleSlider> createState() => _PlayerSemiCircleSliderState();

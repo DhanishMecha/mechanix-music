@@ -99,9 +99,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorAddSongsFailed => 'Failed to add selected songs.';
 
   @override
-  String get errorCountFailed => 'Failed to retrieve total song count.';
-
-  @override
   String get errorUnknown => 'Something went wrong';
 
   @override

@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/core/utils/icons.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
 
 class PlayerArtwork extends StatelessWidget {
   final double size;
-  const PlayerArtwork({super.key, this.size = 280.0});
+  const PlayerArtwork({super.key, this.size = Constants.artworkSize});
 
   static const _fallback = AssetImage(MusicIcons.playerDisc);
 

@@ -58,7 +58,6 @@
   "errorSyncFailed": "Failed to sync the music library.",
   "errorLoadFailed": "Failed to load tracks.",
   "errorAddSongsFailed": "Failed to add selected songs.",
-  "errorCountFailed": "Failed to retrieve total song count.",
   "errorUnknown": "Something went wrong",
   "errorOccurred": "An error occurred"
 }

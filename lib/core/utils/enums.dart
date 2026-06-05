@@ -2,7 +2,6 @@ enum SongErrorType {
   syncFailed,
   loadFailed,
   addSongsFailed,
-  countFailed,
   unknown,
 }
 
