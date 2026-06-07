@@ -130,6 +130,23 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
         await _repo.play(event.song.path);
         completer.complete();
       } catch (e) {
+        final errorStr = e.toString().toLowerCase();
+        AppLogger.e('Error during playback: $e');
+        if (errorStr.contains('file not found')) {
+          emit(
+            state.copyWith(
+              status: PlaybackStatus.failure,
+              errorType: PlaybackErrorType.fileDeleted,
+            ),
+          );
+        } else {
+          emit(
+            state.copyWith(
+              status: PlaybackStatus.failure,
+              errorType: PlaybackErrorType.unknown,
+            ),
+          );
+        }
         completer.completeError(e);
       }
     });
@@ -138,7 +155,12 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       await completer.future;
       emit(state.copyWith(status: PlaybackStatus.playing));
     } catch (e) {
-      emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
+      emit(
+        state.copyWith(
+          status: PlaybackStatus.failure,
+          errorType: PlaybackErrorType.unknown,
+        ),
+      );
     }
   }
 
@@ -174,11 +196,26 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     PlaybackPause event,
     Emitter<PlaybackState> emit,
   ) async {
+    if (state.song == null) return;
+    if (state.status != PlaybackStatus.playing && !_repo.isPlaying) {
+      return;
+    }
     try {
       await _repo.pause();
-      emit(state.copyWith(status: PlaybackStatus.paused));
+      emit(
+        state.copyWith(
+          status: _repo.isPlaying
+              ? PlaybackStatus.playing
+              : PlaybackStatus.paused,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
+      emit(
+        state.copyWith(
+          status: PlaybackStatus.failure,
+          errorType: PlaybackErrorType.unknown,
+        ),
+      );
     }
   }
 
@@ -186,19 +223,41 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
     PlaybackResume event,
     Emitter<PlaybackState> emit,
   ) async {
+    if (state.song == null) return;
+    if (state.status == PlaybackStatus.playing || _repo.isPlaying) {
+      return;
+    }
+
     try {
       await _repo.resume();
-      emit(state.copyWith(status: PlaybackStatus.playing));
+      emit(
+        state.copyWith(
+          status: _repo.isPlaying
+              ? PlaybackStatus.playing
+              : PlaybackStatus.paused,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
+      emit(
+        state.copyWith(
+          status: PlaybackStatus.failure,
+          errorType: PlaybackErrorType.unknown,
+        ),
+      );
     }
   }
 
   Future<void> _onSeek(PlaybackSeek event, Emitter<PlaybackState> emit) async {
     try {
+      if (state.song == null) return;
       await _repo.seek(event.position);
     } catch (e) {
-      emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
+      emit(
+        state.copyWith(
+          status: PlaybackStatus.failure,
+          errorType: PlaybackErrorType.unknown,
+        ),
+      );
     }
   }
 
@@ -207,7 +266,12 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       await _repo.stop();
       emit(const PlaybackState(status: PlaybackStatus.stopped));
     } catch (e) {
-      emit(state.copyWith(status: PlaybackStatus.failure, error: e.toString()));
+      emit(
+        state.copyWith(
+          status: PlaybackStatus.failure,
+          errorType: PlaybackErrorType.unknown,
+        ),
+      );
     }
   }
 

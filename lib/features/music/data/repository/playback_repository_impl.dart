@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/features/music/data/repository/playback_repository.dart';
 
 class PlaybackRepositoryImpl extends PlaybackRepository {
@@ -19,27 +21,56 @@ class PlaybackRepositoryImpl extends PlaybackRepository {
 
   @override
   Future<void> play(String url) async {
-    await _audioPlayer.play(DeviceFileSource(url));
+    try {
+      if (await File(url).exists()) {
+        await _audioPlayer.play(DeviceFileSource(url));
+      } else {
+        throw Exception('File not found');
+      }
+    } catch (e) {
+      AppLogger.e('[PlaybackRepositoryImpl] Error playing audio: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> pause() async {
-    await _audioPlayer.pause();
+    try {
+      await _audioPlayer.pause();
+    } catch (e) {
+      AppLogger.e('[PlaybackRepositoryImpl] Error pausing audio: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> resume() async {
-    await _audioPlayer.resume();
+    try {
+      await _audioPlayer.resume();
+    } catch (e) {
+      AppLogger.e('[PlaybackRepositoryImpl] Error resuming audio: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> seek(Duration position) async {
-    await _audioPlayer.seek(position);
+    try {
+      await _audioPlayer.seek(position);
+    } catch (e) {
+      AppLogger.e('[PlaybackRepositoryImpl] Error seeking audio: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> stop() async {
-    await _audioPlayer.stop();
+    try {
+      await _audioPlayer.stop();
+    } catch (e) {
+      AppLogger.e('[PlaybackRepositoryImpl] Error stopping audio: $e');
+      rethrow;
+    }
   }
 
   @override

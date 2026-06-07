@@ -59,5 +59,7 @@
   "errorLoadFailed": "Failed to load tracks.",
   "errorAddSongsFailed": "Failed to add selected songs.",
   "errorUnknown": "Something went wrong",
-  "errorOccurred": "An error occurred"
+  "errorOccurred": "An error occurred",
+  "errorPlaybackFileDeleted": "File is deleted",
+  "errorPlaybackUnknown": "Something went wrong"
 }

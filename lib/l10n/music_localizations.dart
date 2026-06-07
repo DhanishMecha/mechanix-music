@@ -273,6 +273,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An error occurred'**
   String get errorOccurred;
+
+  /// No description provided for @errorPlaybackFileDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'File is deleted'**
+  String get errorPlaybackFileDeleted;
+
+  /// No description provided for @errorPlaybackUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorPlaybackUnknown;
 }
 
 class _AppLocalizationsDelegate

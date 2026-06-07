@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
+import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
+import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
 import 'package:mechanix_music/l10n/music_localizations.dart';
 import 'package:mechanix_music/features/browse_music/presentation/screens/browse_music_screen.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/browse_music_top_bar.dart';
@@ -38,13 +42,34 @@ class _MusicScreenState extends State<MusicScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: _buildAppBar(l10n),
-      extendBodyBehindAppBar: false,
-      body: IndexedStack(index: _currentIndex, children: _tabs),
-      bottomNavigationBar: MusicBottomBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+    return BlocListener<PlaybackBloc, PlaybackState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status &&
+          current.status == PlaybackStatus.failure,
+      listener: (context, state) {
+        if (state.errorType != null) {
+          final l10n = AppLocalizations.of(context)!;
+          final message = switch (state.errorType!) {
+            PlaybackErrorType.fileDeleted => l10n.errorPlaybackFileDeleted,
+            PlaybackErrorType.unknown => l10n.errorPlaybackUnknown,
+          };
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.red.shade900,
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(l10n),
+        extendBodyBehindAppBar: false,
+        body: IndexedStack(index: _currentIndex, children: _tabs),
+        bottomNavigationBar: MusicBottomBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+        ),
       ),
     );
   }

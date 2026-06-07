@@ -103,4 +103,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorOccurred => 'An error occurred';
+
+  @override
+  String get errorPlaybackFileDeleted => 'File is deleted';
+
+  @override
+  String get errorPlaybackUnknown => 'Something went wrong';
 }

@@ -1,6 +1,7 @@
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/features/browse_music/data/models/browse_folder_item.dart';
 import 'package:mechanix_music/features/browse_music/data/models/file_system_entry.dart';
@@ -10,7 +11,8 @@ import 'package:path/path.dart' as p;
 class BrowseRepositoryImpl implements BrowseRepository {
   BrowseRepositoryImpl({FileSystem? fileSystem})
     : _fs = fileSystem ?? const LocalFileSystem();
-
+  List<FileSystemEntry>? _cachedEntries; // Store current directory
+  String? _cachedDirectoryPath; // path of current directory
   final FileSystem _fs;
 
   @override
@@ -55,21 +57,20 @@ class BrowseRepositoryImpl implements BrowseRepository {
     return drives;
   }
 
-  @override
-  Future<({List<FileSystemEntry> entries, bool hasMore})> listDirectory(
-    String directoryPath, {
-    int offset = 0,
-    int limit = 30,
-  }) async {
+  Future<List<FileSystemEntry>> _loadDirectoryEntries(
+    String directoryPath,
+  ) async {
+    if (_cachedDirectoryPath == directoryPath && _cachedEntries != null) {
+      return _cachedEntries!;
+    }
+
     final dir = _fs.directory(directoryPath);
+
     if (!await dir.exists()) {
-      return (entries: const <FileSystemEntry>[], hasMore: false);
+      return [];
     }
 
     final entries = <FileSystemEntry>[];
-    int skipped = 0;
-    int taken = 0;
-    bool hasMore = false;
 
     try {
       await for (final entity in dir.list(
@@ -77,28 +78,24 @@ class BrowseRepositoryImpl implements BrowseRepository {
         followLinks: false,
       )) {
         final name = p.basename(entity.path);
-        if (name.startsWith('.')) continue; // skip hidden entries
+
+        if (name.startsWith('.')) {
+          continue; // skip hidden files
+        }
 
         final isDirectory = entity is Directory;
+
         if (!isDirectory) {
           final extension = p.extension(entity.path).toLowerCase();
+
           if (!Constants.audioExt.contains(extension)) {
-            continue; // only show audio files in the folder browser
+            continue;
           }
-        }
-
-        if (skipped < offset) {
-          skipped++;
-          continue;
-        }
-
-        if (taken >= limit) {
-          hasMore = true;
-          break;
         }
 
         try {
           final stat = await entity.stat();
+
           entries.add(
             FileSystemEntry(
               name: name,
@@ -107,15 +104,48 @@ class BrowseRepositoryImpl implements BrowseRepository {
               modifiedDate: stat.modified,
             ),
           );
-          taken++;
-        } catch (_) {
-          // skip entries we cannot stat
-        }
+        } catch (_) {}
       }
+      // directories first
+      entries.sort((a, b) {
+        if (a.isDirectory != b.isDirectory) {
+          return a.isDirectory ? -1 : 1;
+        }
+
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+
+      _cachedDirectoryPath = directoryPath;
+      _cachedEntries = entries;
+
+      return entries;
     } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<({List<FileSystemEntry> entries, bool hasMore})> listDirectory(
+    String directoryPath, {
+    int offset = 0,
+    int limit = Constants.pageSize,
+  }) async {
+    try {
+      final allEntries = await _loadDirectoryEntries(directoryPath);
+
+      if (offset >= allEntries.length) {
+        return (entries: const <FileSystemEntry>[], hasMore: false);
+      }
+
+      final end = (offset + limit).clamp(0, allEntries.length);
+
+      return (
+        entries: allEntries.sublist(offset, end),
+        hasMore: end < allEntries.length,
+      );
+    } catch (e) {
+      AppLogger.e('[BrowseRepositoryImpl] listDirectory failed: $e');
       return (entries: const <FileSystemEntry>[], hasMore: false);
     }
-
-    return (entries: entries, hasMore: hasMore);
   }
 }

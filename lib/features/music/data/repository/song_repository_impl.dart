@@ -55,7 +55,7 @@ class SongRepositoryImpl extends SongRepository {
   Future<void> _initializeStore() async {
     try {
       final home = Platform.environment['HOME'];
-      final appDir = Directory('$home/.config/mechanix_music/objectbox');
+      final appDir = Directory('$home/${Constants.dbPath}');
       final exists = await appDir.exists();
 
       if (!exists) {
