@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/helper.dart';
+import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
+import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/browse_music/data/models/file_system_entry.dart';
 
 class FolderDirectoryTile extends StatelessWidget {
   final FileSystemEntry entry;
-  final String Function(DateTime) formatDate;
-  final VoidCallback onTap;
 
   const FolderDirectoryTile({
     super.key,
     required this.entry,
-    required this.formatDate,
-    required this.onTap,
   });
+
+  void _onTap(BuildContext context) {
+    final bloc = context.read<BrowseFolderBloc>();
+    if (bloc.state.isSelectionMode) {
+      bloc.add(const BrowseFolderSetSelectionMode());
+    }
+    bloc.add(BrowseFolderNavigate(entry.path));
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () => _onTap(context),
       splashColor: const Color(0x1AFFFFFF),
       highlightColor: const Color(0x0DFFFFFF),
       child: SizedBox(

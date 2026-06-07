@@ -1,21 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/app_logger.dart';
+import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
+import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
+import 'package:mechanix_music/features/music/bloc/song_bloc.dart';
+import 'package:mechanix_music/features/music/bloc/song_event.dart';
 import 'package:mechanix_music/l10n/music_localizations.dart';
 
 class SelectionBottomBar extends StatelessWidget {
-  final VoidCallback onCancel;
-  final VoidCallback onSelectAll;
-  final VoidCallback onSave;
+  const SelectionBottomBar({super.key});
 
-  const SelectionBottomBar({
-    super.key,
-    required this.onCancel,
-    required this.onSelectAll,
-    required this.onSave,
-  });
+  Future<void> _saveToObjectBox(BuildContext context, Set<String> selectedPaths) async {
+    if (selectedPaths.isEmpty) return;
+
+    final pathsToSave = selectedPaths.toList();
+    final localizations = AppLocalizations.of(context)!;
+
+    AppLogger.i('Saving ${pathsToSave.length} songs to ObjectBox');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          localizations.savingSongs(pathsToSave.length),
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF151515),
+        duration: const Duration(milliseconds: 500),
+      ),
+    );
+
+    context.read<SongBloc>().add(SongAddByPaths(pathsToSave));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          localizations.queuedSongs(pathsToSave.length),
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.green.shade900,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    context.read<BrowseFolderBloc>().add(const BrowseFolderSetSelectionMode());
+  }
 
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final bloc = context.read<BrowseFolderBloc>();
+
     return Container(
       height: 64,
       width: double.infinity,
@@ -29,7 +63,7 @@ class SelectionBottomBar extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.close, color: Color(0xFFDDDDDD), size: 28),
-            onPressed: onCancel,
+            onPressed: () => bloc.add(const BrowseFolderSetSelectionMode()),
             tooltip: localizations!.tooltipCancel,
           ),
           IconButton(
@@ -38,12 +72,12 @@ class SelectionBottomBar extends StatelessWidget {
               color: Color(0xFFDDDDDD),
               size: 28,
             ),
-            onPressed: onSelectAll,
+            onPressed: () => bloc.add(const BrowseFolderSelectAll()),
             tooltip: localizations.tooltipSelectAll,
           ),
           IconButton(
             icon: const Icon(Icons.check, color: Color(0xFFDDDDDD), size: 28),
-            onPressed: onSave,
+            onPressed: () => _saveToObjectBox(context, bloc.state.selectedPaths),
             tooltip: localizations.tooltipSave,
           ),
         ],

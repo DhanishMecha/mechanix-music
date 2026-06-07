@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
+import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_state.dart';
-import 'package:mechanix_music/features/browse_music/data/models/file_system_entry.dart';
 
 import 'folder_audio_tile.dart';
 import 'folder_directory_tile.dart';
@@ -8,31 +10,46 @@ import 'folder_empty_state.dart';
 import 'folder_error_state.dart';
 import 'folder_load_more_indicator.dart';
 
-class FolderContentsBody extends StatelessWidget {
+class FolderContentsBody extends StatefulWidget {
   final BrowseFolderState state;
-  final ScrollController scrollController;
-  final String Function(DateTime) formatDate;
-  final void Function(String path) onDirectoryTap;
-  final void Function(FileSystemEntry entry, List<FileSystemEntry> allEntries)
-  onFileTap;
-  final void Function(String path) onFileLongPress;
-  final void Function(String path) onToggleSelection;
-  final VoidCallback onRetry;
 
-  const FolderContentsBody({
-    super.key,
-    required this.state,
-    required this.scrollController,
-    required this.formatDate,
-    required this.onDirectoryTap,
-    required this.onFileTap,
-    required this.onFileLongPress,
-    required this.onToggleSelection,
-    required this.onRetry,
-  });
+  const FolderContentsBody({super.key, required this.state});
+
+  @override
+  State<FolderContentsBody> createState() => _FolderContentsBodyState();
+}
+
+class _FolderContentsBodyState extends State<FolderContentsBody> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    final isNearBottom = position.pixels >= position.maxScrollExtent - 200;
+
+    if (!isNearBottom) return;
+
+    final bloc = context.read<BrowseFolderBloc>();
+    if (bloc.state.hasMore && !bloc.state.isLoadingMore) {
+      bloc.add(const BrowseFolderLoadMore());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final state = widget.state;
+
     if (state.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -42,7 +59,11 @@ class FolderContentsBody extends StatelessWidget {
     }
 
     if (state.error != null) {
-      return FolderErrorState(error: state.error!, onRetry: onRetry);
+      final bloc = context.read<BrowseFolderBloc>();
+      return FolderErrorState(
+        error: state.error!,
+        onRetry: () => bloc.add(const BrowseFolderLoad()),
+      );
     }
 
     if (state.entries.isEmpty) {
@@ -50,7 +71,7 @@ class FolderContentsBody extends StatelessWidget {
     }
 
     return ListView.builder(
-      controller: scrollController,
+      controller: _scrollController,
       itemCount: state.entries.length + (state.hasMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == state.entries.length) {
@@ -62,32 +83,10 @@ class FolderContentsBody extends StatelessWidget {
         if (entry.isDirectory) {
           return FolderDirectoryTile(
             entry: entry,
-            formatDate: formatDate,
-            onTap: () => onDirectoryTap(entry.path),
           );
         } else {
-          final isSelected = state.selectedPaths.contains(entry.path);
-
           return FolderAudioTile(
             entry: entry,
-            isSelected: isSelected,
-            isSelectionMode: state.isSelectionMode,
-            formatDate: formatDate,
-            onTap: () {
-              if (state.isSelectionMode) {
-                onToggleSelection(entry.path);
-              } else {
-                onFileTap(entry, state.entries);
-              }
-            },
-            onLongPress: () {
-              if (!state.isSelectionMode) {
-                onFileLongPress(entry.path);
-              } else {
-                onToggleSelection(entry.path);
-              }
-            },
-            onToggleSelection: () => onToggleSelection(entry.path),
           );
         }
       },
