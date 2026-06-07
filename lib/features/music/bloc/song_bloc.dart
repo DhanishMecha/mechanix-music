@@ -93,7 +93,7 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     final index = songs.indexWhere((s) => s.path == event.song.path);
 
     if (index != -1) {
-      // Existing song updated — replace in place
+      // Existing song — update in place
       songs[index] = event.song;
       AppLogger.i('[SongBloc] Updated in state: ${event.song.path}');
     } else {
@@ -159,7 +159,7 @@ class SongBloc extends Bloc<SongEvent, SongState> {
       totalCount = await songRepository.getSongCount();
     } catch (e) {
       AppLogger.e('[SongBloc] getSongCount failed: $e');
-      emit(const SongError(SongErrorType.countFailed));
+      emit(const SongError(SongErrorType.unknown));
       rethrow;
     }
 

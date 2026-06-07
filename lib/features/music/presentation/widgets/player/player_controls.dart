@@ -25,12 +25,17 @@ class PlayerControls extends StatelessWidget {
         const SizedBox(),
 
         // previous icon
-        MusicButton(
-          boxSize: 48,
-          iconPath: MusicIcons.previousIcon,
-          isSelected: false,
-          onTap: () {
-            context.read<PlaybackBloc>().add(const PlaybackPlayPrevious());
+        BlocSelector<PlaybackBloc, PlaybackState, bool>(
+          selector: (state) => state.hasPrevious,
+          builder: (context, hasPrevious) {
+            return MusicButton(
+              boxSize: 48,
+              iconPath: MusicIcons.previousIcon,
+              isSelected: false,
+              onTap: hasPrevious
+                  ? () => context.read<PlaybackBloc>().add(const PlaybackPlayPrevious())
+                  : null,
+            );
           },
         ),
 
@@ -58,12 +63,17 @@ class PlayerControls extends StatelessWidget {
         ),
 
         // next icon
-        MusicButton(
-          boxSize: 48,
-          iconPath: MusicIcons.nextIcon,
-          isSelected: false,
-          onTap: () {
-            context.read<PlaybackBloc>().add(const PlaybackPlayNext());
+        BlocSelector<PlaybackBloc, PlaybackState, bool>(
+          selector: (state) => state.hasNext,
+          builder: (context, hasNext) {
+            return MusicButton(
+              boxSize: 48,
+              iconPath: MusicIcons.nextIcon,
+              isSelected: false,
+              onTap: hasNext
+                  ? () => context.read<PlaybackBloc>().add(const PlaybackPlayNext())
+                  : null,
+            );
           },
         ),
         const SizedBox(),

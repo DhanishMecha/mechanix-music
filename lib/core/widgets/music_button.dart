@@ -14,7 +14,7 @@ class MusicButton extends StatelessWidget {
 
   final String iconPath;
   final bool isSelected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final double boxSize;
   final double iconSize;
   final Color? iconColor;
@@ -44,8 +44,9 @@ class MusicButton extends StatelessWidget {
         iconPath,
         width: iconSize,
         height: iconSize,
-        color:
-            iconColor ?? (isSelected ? Colors.white : MusicColors.titleColor),
+        color: onTap == null
+            ? MusicColors.titleColor.withValues(alpha: 0.3)
+            : (iconColor ?? (isSelected ? Colors.white : MusicColors.titleColor)),
       ),
     );
   }
