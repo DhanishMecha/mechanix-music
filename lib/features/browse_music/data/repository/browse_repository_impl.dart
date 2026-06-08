@@ -25,8 +25,6 @@ class BrowseRepositoryImpl implements BrowseRepository {
     );
 
     // Parse /proc/mounts to find real block-device partitions.
-    // This avoids shelling out to external commands which is better
-    // for embedded devices with limited process-spawn overhead.
     try {
       final mounts = await _fs.file('/proc/mounts').readAsString();
       for (final line in mounts.split('\n')) {
@@ -50,8 +48,9 @@ class BrowseRepositoryImpl implements BrowseRepository {
           BrowseFolderItem(icon: Icons.usb, title: label, path: mountPoint),
         );
       }
-    } catch (_) {
+    } catch (e) {
       // If /proc/mounts is unavailable, return just root
+      AppLogger.e('Failed to read /proc/mounts ', error: e);
     }
 
     return drives;
@@ -104,7 +103,9 @@ class BrowseRepositoryImpl implements BrowseRepository {
               modifiedDate: stat.modified,
             ),
           );
-        } catch (_) {}
+        } catch (_) {
+          AppLogger.e("Failed to get stats for $entity");
+        }
       }
       // directories first
       entries.sort((a, b) {
@@ -120,6 +121,7 @@ class BrowseRepositoryImpl implements BrowseRepository {
 
       return entries;
     } catch (_) {
+      AppLogger.e("Failed to list directory $directoryPath");
       return [];
     }
   }

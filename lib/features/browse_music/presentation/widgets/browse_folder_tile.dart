@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/core/utils/colors.dart';
 
-/// A single row tile used in the Browse Music folder list.
-///
-/// Displays an [icon] on the left, a [title] label, and a right-chevron
-/// indicator. Tapping the tile triggers [onTap].
 class BrowseFolderTile extends StatelessWidget {
   const BrowseFolderTile({
     super.key,

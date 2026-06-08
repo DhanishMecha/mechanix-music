@@ -157,6 +157,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       emit(state.copyWith(status: PlaybackStatus.playing));
     } catch (e) {
       // Debounce timer catch block already emitted the failure state.
+      AppLogger.e('Error during playback: $e');
     }
   }
 
@@ -206,6 +207,8 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
         ),
       );
     } catch (e) {
+      AppLogger.e('Error during pause: $e');
+
       emit(
         state.copyWith(
           status: PlaybackStatus.failure,
@@ -234,6 +237,8 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
         ),
       );
     } catch (e) {
+      AppLogger.e('Error during resume: $e');
+
       emit(
         state.copyWith(
           status: PlaybackStatus.failure,
@@ -248,6 +253,8 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       if (state.song == null) return;
       await _repo.seek(event.position);
     } catch (e) {
+      AppLogger.e('Error during seek: $e');
+
       emit(
         state.copyWith(
           status: PlaybackStatus.failure,
@@ -262,6 +269,8 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       await _repo.stop();
       emit(const PlaybackState(status: PlaybackStatus.stopped));
     } catch (e) {
+      AppLogger.e('Error during stop: $e');
+
       emit(
         state.copyWith(
           status: PlaybackStatus.failure,

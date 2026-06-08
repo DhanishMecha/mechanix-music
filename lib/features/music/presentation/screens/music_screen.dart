@@ -19,7 +19,7 @@ class MusicScreen extends StatefulWidget {
 }
 
 class _MusicScreenState extends State<MusicScreen> {
-  int _currentIndex = 2;
+  int _currentIndex = 2; // default to track tab
 
   final List<Widget> _tabs = const [
     Center(child: PlayTab()),

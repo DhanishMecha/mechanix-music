@@ -23,7 +23,7 @@ class _EqualizerIconState extends State<EqualizerIcon> {
   // ─── Pre-baked frame table (computed ONCE at class init, never again) ───────
   // 24 frames × 3 bars = 72 doubles in a flat List<double>.
   // No sin(), no math at runtime — just an array lookup per tick.
-  static const _fps = 24; // 8 repaints/sec  vs  60 before → ~87 % less
+  static const _fps = 24; // 8 repaints/sec
   static const _totalFrames = 24; // 24 / 8fps = 3-second seamless loop
   static const _barCount = 3;
   static const _phases = [0.0, 2.094, 4.189]; // 0, 2π/3, 4π/3
