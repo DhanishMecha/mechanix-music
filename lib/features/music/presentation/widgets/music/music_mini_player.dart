@@ -199,7 +199,7 @@ class _ProgressArtworkState extends State<_ProgressArtwork> {
                     child: CircularProgressIndicator(
                       value: _progress,
                       strokeWidth: 2,
-                      backgroundColor:Colors.transparent,
+                      backgroundColor: Colors.transparent,
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         MusicColors.titleColor,
                       ),

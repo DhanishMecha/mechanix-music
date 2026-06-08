@@ -15,10 +15,7 @@ import 'package:mechanix_music/features/music/data/models/song_model.dart';
 class FolderAudioTile extends StatelessWidget {
   final FileSystemEntry entry;
 
-  const FolderAudioTile({
-    super.key,
-    required this.entry,
-  });
+  const FolderAudioTile({super.key, required this.entry});
 
   void _playFile(BuildContext context, BrowseFolderState state) {
     final audioEntries = state.entries.where((e) => !e.isDirectory).toList();
@@ -53,7 +50,11 @@ class FolderAudioTile extends StatelessWidget {
     Navigator.pushNamed(context, AppRoutes.player);
   }
 
-  void _onTap(BuildContext context, BrowseFolderState state, BrowseFolderBloc bloc) {
+  void _onTap(
+    BuildContext context,
+    BrowseFolderState state,
+    BrowseFolderBloc bloc,
+  ) {
     if (state.isSelectionMode) {
       bloc.add(BrowseFolderToggleSelection(entry.path));
     } else {
@@ -61,7 +62,11 @@ class FolderAudioTile extends StatelessWidget {
     }
   }
 
-  void _onLongPress(BuildContext context, BrowseFolderState state, BrowseFolderBloc bloc) {
+  void _onLongPress(
+    BuildContext context,
+    BrowseFolderState state,
+    BrowseFolderBloc bloc,
+  ) {
     if (!state.isSelectionMode) {
       bloc.add(BrowseFolderSetSelectionMode(path: entry.path));
     } else {
@@ -96,7 +101,8 @@ class FolderAudioTile extends StatelessWidget {
                 children: [
                   if (isSelectionMode)
                     GestureDetector(
-                      onTap: () => bloc.add(BrowseFolderToggleSelection(entry.path)),
+                      onTap: () =>
+                          bloc.add(BrowseFolderToggleSelection(entry.path)),
                       child: Container(
                         width: 24,
                         height: 24,

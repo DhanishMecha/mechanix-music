@@ -125,7 +125,9 @@ class SongRepositoryImpl extends SongRepository {
         artworkCacheDirPath: artworkCacheDirPath,
       );
 
-      final isTest = Platform.environment.containsKey('FLUTTER_TEST');// for Unit test only.
+      final isTest = Platform.environment.containsKey(
+        'FLUTTER_TEST',
+      ); // for Unit test only.
       final changesDetected = isTest
           ? await _syncInitialSongLibraryIsolate(
               args,
@@ -133,9 +135,7 @@ class SongRepositoryImpl extends SongRepository {
               box: _box,
               scanner: _fileScannerService,
             )
-          : await Isolate.run<bool>(
-              () => _syncInitialSongLibraryIsolate(args),
-            );
+          : await Isolate.run<bool>(() => _syncInitialSongLibraryIsolate(args));
 
       AppLogger.i(
         '[SongRepository] Sync initial library completed (changesDetected: $changesDetected) for '
@@ -242,13 +242,13 @@ class SongRepositoryImpl extends SongRepository {
     final musicDir = _musicDirectoryProvider();
     final dir = Directory(musicDir);
     if (!dir.existsSync()) {
-      AppLogger.i('[FileWatcher] Music directory does not exist: $musicDir. Skipping watcher.');
+      AppLogger.i(
+        '[FileWatcher] Music directory does not exist: $musicDir. Skipping watcher.',
+      );
       return;
     }
 
-    _watcherSubscription = dir.watch(recursive: false).listen((
-      event,
-    ) {
+    _watcherSubscription = dir.watch(recursive: false).listen((event) {
       if (!isAudioFile(event.path)) return;
 
       switch (event.type) {
@@ -382,16 +382,20 @@ Future<bool> _syncInitialSongLibraryIsolate(
   FileScannerService? scanner,
 }) async {
   // 1. Attach to store if store is not provided
-  final storeToUse = store ??
-      Store.attach(getObjectBoxModel(), args.dbDirectoryPath);
+  final storeToUse =
+      store ?? Store.attach(getObjectBoxModel(), args.dbDirectoryPath);
   final boxToUse = box ?? storeToUse.box<SongModel>();
 
   try {
     // 2. Fetch cached songs from DB using separate queries based on isExternal
-    final internalStoredSongs =
-        boxToUse.query(SongModel_.isExternal.equals(false)).build().find();
-    final externalStoredSongs =
-        boxToUse.query(SongModel_.isExternal.equals(true)).build().find();
+    final internalStoredSongs = boxToUse
+        .query(SongModel_.isExternal.equals(false))
+        .build()
+        .find();
+    final externalStoredSongs = boxToUse
+        .query(SongModel_.isExternal.equals(true))
+        .build()
+        .find();
 
     final storedSongsByPath = <String, SongModel>{};
     for (final s in internalStoredSongs) {
@@ -457,7 +461,8 @@ Future<bool> _syncInitialSongLibraryIsolate(
     }
 
     // 5. Scan metadata for new/modified files in the isolate
-    final scannerToUse = scanner ??
+    final scannerToUse =
+        scanner ??
         FileScannerService(
           artworkCacheDir: Directory(args.artworkCacheDirPath),
         );

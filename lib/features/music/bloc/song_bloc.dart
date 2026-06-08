@@ -58,15 +58,21 @@ class SongBloc extends Bloc<SongEvent, SongState> {
 
     // Run sync in the background
     unawaited(
-      songRepository.syncInitialSongLibrary().then((changesDetected) {
-        AppLogger.i('[SongBloc] Background sync completed (changesDetected: $changesDetected)');
-        final isEmpty = state is SongLoaded && (state as SongLoaded).songs.isEmpty;
-        if (changesDetected || isEmpty) {
-          add(const SongSyncCompleted());
-        }
-      }).catchError((e) {
-        AppLogger.e('[SongBloc] Background sync failed: $e');
-      }),
+      songRepository
+          .syncInitialSongLibrary()
+          .then((changesDetected) {
+            AppLogger.i(
+              '[SongBloc] Background sync completed (changesDetected: $changesDetected)',
+            );
+            final isEmpty =
+                state is SongLoaded && (state as SongLoaded).songs.isEmpty;
+            if (changesDetected || isEmpty) {
+              add(const SongSyncCompleted());
+            }
+          })
+          .catchError((e) {
+            AppLogger.e('[SongBloc] Background sync failed: $e');
+          }),
     );
   }
 

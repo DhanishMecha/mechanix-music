@@ -6,10 +6,7 @@ import 'package:mechanix_music/core/widgets/music_button.dart';
 class FolderContentBottomBar extends StatelessWidget {
   final VoidCallback onTap;
 
-  const FolderContentBottomBar({
-    super.key,
-    required this.onTap,
-  });
+  const FolderContentBottomBar({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

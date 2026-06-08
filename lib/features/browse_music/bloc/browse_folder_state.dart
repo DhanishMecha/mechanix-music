@@ -27,16 +27,16 @@ class BrowseFolderState extends Equatable {
 
   @override
   List<Object?> get props => [
-        directoryPath,
-        folderName,
-        entries,
-        isLoading,
-        isLoadingMore,
-        hasMore,
-        isSelectionMode,
-        selectedPaths,
-        error,
-      ];
+    directoryPath,
+    folderName,
+    entries,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    isSelectionMode,
+    selectedPaths,
+    error,
+  ];
 
   BrowseFolderState copyWith({
     String? directoryPath,

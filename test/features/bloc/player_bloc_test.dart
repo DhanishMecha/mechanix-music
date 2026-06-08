@@ -20,8 +20,12 @@ class MockSongBloc extends MockBloc<SongEvent, SongState> implements SongBloc {}
 
 class MockSongRepository extends Mock implements SongRepository {}
 
-SongModel song(String id) =>
-    SongModel(id: id, path: '/$id.mp3', title: 'Title $id', artist: 'artist-$id');
+SongModel song(String id) => SongModel(
+  id: id,
+  path: '/$id.mp3',
+  title: 'Title $id',
+  artist: 'artist-$id',
+);
 
 // Shared instances so PlaybackState equality (which compares SongModel by
 // identity, as SongModel is not Equatable) is stable across tests.
@@ -56,9 +60,12 @@ void main() {
     var isPlaying = false;
     when(() => repo.isPlaying).thenAnswer((_) => isPlaying);
 
-    when(() => repo.onDurationChanged)
-        .thenAnswer((_) => durationController.stream);
-    when(() => repo.onSongComplete).thenAnswer((_) => completeController.stream);
+    when(
+      () => repo.onDurationChanged,
+    ).thenAnswer((_) => durationController.stream);
+    when(
+      () => repo.onSongComplete,
+    ).thenAnswer((_) => completeController.stream);
     when(() => repo.play(any())).thenAnswer((_) async {
       isPlaying = true;
     });
@@ -193,7 +200,11 @@ void main() {
         ),
         isA<PlaybackState>()
             .having((s) => s.status, 'status', PlaybackStatus.failure)
-            .having((s) => s.errorType, 'errorType', PlaybackErrorType.fileDeleted),
+            .having(
+              (s) => s.errorType,
+              'errorType',
+              PlaybackErrorType.fileDeleted,
+            ),
       ],
       verify: (_) {
         verify(() => songRepo.deleteSongByPath(list5[2].path)).called(1);
@@ -280,7 +291,8 @@ void main() {
 
     blocTest<PlaybackBloc, PlaybackState>(
       'emits failure when seeking throws',
-      setUp: () => when(() => repo.seek(any())).thenThrow(Exception('seek err')),
+      setUp: () =>
+          when(() => repo.seek(any())).thenThrow(Exception('seek err')),
       build: buildBloc,
       seed: () => PlaybackState(status: PlaybackStatus.playing, song: list5[0]),
       act: (bloc) => bloc.add(const PlaybackSeek(Duration(seconds: 30))),
@@ -401,7 +413,8 @@ void main() {
 
     blocTest<PlaybackBloc, PlaybackState>(
       'emits failure when playing the next song throws',
-      setUp: () => when(() => repo.play(any())).thenThrow(Exception('next err')),
+      setUp: () =>
+          when(() => repo.play(any())).thenThrow(Exception('next err')),
       build: buildBloc,
       seed: () => PlaybackState(
         status: PlaybackStatus.playing,
@@ -472,7 +485,8 @@ void main() {
 
     blocTest<PlaybackBloc, PlaybackState>(
       'emits failure when playing the previous song throws',
-      setUp: () => when(() => repo.play(any())).thenThrow(Exception('prev err')),
+      setUp: () =>
+          when(() => repo.play(any())).thenThrow(Exception('prev err')),
       build: buildBloc,
       seed: () => PlaybackState(
         status: PlaybackStatus.playing,
@@ -570,9 +584,7 @@ void main() {
       act: (bloc) =>
           songStateController.add(SongLoaded(songs: list5, hasMore: false)),
       wait: const Duration(milliseconds: 50),
-      expect: () => [
-        PlaybackState(playbackList: list5),
-      ],
+      expect: () => [PlaybackState(playbackList: list5)],
     );
 
     blocTest<PlaybackBloc, PlaybackState>(
@@ -641,21 +653,21 @@ void main() {
       build: buildBloc,
       act: (bloc) => durationController.add(const Duration(seconds: 200)),
       wait: const Duration(milliseconds: 50),
-      expect: () => [
-        const PlaybackState(songDuration: Duration(seconds: 200)),
-      ],
+      expect: () => [const PlaybackState(songDuration: Duration(seconds: 200))],
     );
   });
 
   group('close', () {
-    test('cancels the SongBloc subscription and disposes the repository',
-        () async {
-      final bloc = buildBloc();
+    test(
+      'cancels the SongBloc subscription and disposes the repository',
+      () async {
+        final bloc = buildBloc();
 
-      await bloc.close();
+        await bloc.close();
 
-      verify(() => repo.dispose()).called(1);
-      expect(bloc.isClosed, isTrue);
-    });
+        verify(() => repo.dispose()).called(1);
+        expect(bloc.isClosed, isTrue);
+      },
+    );
   });
 }

@@ -46,7 +46,8 @@ class MusicButton extends StatelessWidget {
         height: iconSize,
         color: onTap == null
             ? MusicColors.titleColor.withValues(alpha: 0.3)
-            : (iconColor ?? (isSelected ? Colors.white : MusicColors.titleColor)),
+            : (iconColor ??
+                  (isSelected ? Colors.white : MusicColors.titleColor)),
       ),
     );
   }

@@ -11,7 +11,10 @@ import 'package:mechanix_music/l10n/music_localizations.dart';
 class SelectionBottomBar extends StatelessWidget {
   const SelectionBottomBar({super.key});
 
-  Future<void> _saveToObjectBox(BuildContext context, Set<String> selectedPaths) async {
+  Future<void> _saveToObjectBox(
+    BuildContext context,
+    Set<String> selectedPaths,
+  ) async {
     if (selectedPaths.isEmpty) return;
 
     final pathsToSave = selectedPaths.toList();
@@ -57,13 +60,19 @@ class SelectionBottomBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: const BoxDecoration(
         color: MusicColors.bottomBarBg,
-        border: Border(top: BorderSide(color: MusicColors.dividerColor, width: 1)),
+        border: Border(
+          top: BorderSide(color: MusicColors.dividerColor, width: 1),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: MusicColors.titleColor, size: 28),
+            icon: const Icon(
+              Icons.close,
+              color: MusicColors.titleColor,
+              size: 28,
+            ),
             onPressed: () => bloc.add(const BrowseFolderSetSelectionMode()),
             tooltip: localizations!.tooltipCancel,
           ),
@@ -77,8 +86,13 @@ class SelectionBottomBar extends StatelessWidget {
             tooltip: localizations.tooltipSelectAll,
           ),
           IconButton(
-            icon: const Icon(Icons.check, color: MusicColors.titleColor, size: 28),
-            onPressed: () => _saveToObjectBox(context, bloc.state.selectedPaths),
+            icon: const Icon(
+              Icons.check,
+              color: MusicColors.titleColor,
+              size: 28,
+            ),
+            onPressed: () =>
+                _saveToObjectBox(context, bloc.state.selectedPaths),
             tooltip: localizations.tooltipSave,
           ),
         ],

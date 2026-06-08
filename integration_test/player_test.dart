@@ -45,14 +45,12 @@ void main() {
         TestHelper.findMusicButton('assets/icons/next.png'),
         findsOneWidget,
       );
-      final hasPause =
-          TestHelper.findMusicButton('assets/icons/pause.png')
-              .evaluate()
-              .isNotEmpty;
-      final hasResume =
-          TestHelper.findMusicButton('assets/icons/resume.png')
-              .evaluate()
-              .isNotEmpty;
+      final hasPause = TestHelper.findMusicButton(
+        'assets/icons/pause.png',
+      ).evaluate().isNotEmpty;
+      final hasResume = TestHelper.findMusicButton(
+        'assets/icons/resume.png',
+      ).evaluate().isNotEmpty;
       expect(hasPause || hasResume, isTrue);
 
       // ── Play / pause toggles twice without crashing ───────────────────────

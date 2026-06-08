@@ -33,7 +33,9 @@ class PlayerControls extends StatelessWidget {
               iconPath: MusicIcons.previousIcon,
               isSelected: false,
               onTap: hasPrevious
-                  ? () => context.read<PlaybackBloc>().add(const PlaybackPlayPrevious())
+                  ? () => context.read<PlaybackBloc>().add(
+                      const PlaybackPlayPrevious(),
+                    )
                   : null,
             );
           },
@@ -71,7 +73,9 @@ class PlayerControls extends StatelessWidget {
               iconPath: MusicIcons.nextIcon,
               isSelected: false,
               onTap: hasNext
-                  ? () => context.read<PlaybackBloc>().add(const PlaybackPlayNext())
+                  ? () => context.read<PlaybackBloc>().add(
+                      const PlaybackPlayNext(),
+                    )
                   : null,
             );
           },

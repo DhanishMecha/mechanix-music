@@ -25,7 +25,10 @@ class FolderErrorState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               error,
-              style: const TextStyle(color: MusicColors.titleColor, fontSize: 16),
+              style: const TextStyle(
+                color: MusicColors.titleColor,
+                fontSize: 16,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),

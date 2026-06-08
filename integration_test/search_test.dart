@@ -13,7 +13,7 @@ void main() {
 
       // --- Go to Search tab ---
       await TestHelper.tapTab(tester, TestHelper.searchTab);
-      
+
       // Verify SearchTab is visible
       expect(find.byType(SearchTab), findsOneWidget);
       expect(find.text('Search'), findsWidgets);

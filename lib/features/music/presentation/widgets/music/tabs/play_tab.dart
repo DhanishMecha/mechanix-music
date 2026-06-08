@@ -7,8 +7,6 @@ class PlayTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
-    return Center(
-      child: Text(localizations!.play),
-    );
+    return Center(child: Text(localizations!.play));
   }
 }

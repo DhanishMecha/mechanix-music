@@ -5,10 +5,7 @@ import 'package:mechanix_music/l10n/music_localizations.dart';
 class SelectionHeader extends StatelessWidget {
   final int selectedCount;
 
-  const SelectionHeader({
-    super.key,
-    required this.selectedCount,
-  });
+  const SelectionHeader({super.key, required this.selectedCount});
 
   @override
   Widget build(BuildContext context) {

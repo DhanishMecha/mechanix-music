@@ -74,6 +74,7 @@ class _FolderContentsBodyState extends State<FolderContentsBody> {
     return ListView.builder(
       controller: _scrollController,
       itemCount: state.entries.length + (state.hasMore ? 1 : 0),
+      itemExtent: 72,
       itemBuilder: (context, index) {
         if (index == state.entries.length) {
           return const FolderLoadMoreIndicator();
@@ -82,13 +83,9 @@ class _FolderContentsBodyState extends State<FolderContentsBody> {
         final entry = state.entries[index];
 
         if (entry.isDirectory) {
-          return FolderDirectoryTile(
-            entry: entry,
-          );
+          return FolderDirectoryTile(key: ValueKey(entry.path), entry: entry);
         } else {
-          return FolderAudioTile(
-            entry: entry,
-          );
+          return FolderAudioTile(key: ValueKey(entry.path), entry: entry);
         }
       },
     );

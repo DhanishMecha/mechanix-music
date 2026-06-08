@@ -20,5 +20,5 @@ class MusicIcons {
   static const String tracksIcon = 'assets/icons/tracks.png';
   static const String artworkIcon = 'assets/icons/artwork.png';
   static const String pauseIcon = 'assets/icons/pause.png';
-  static const String playerDisc = 'assets/icons/playerdisc.png'; 
+  static const String playerDisc = 'assets/icons/playerdisc.png';
 }

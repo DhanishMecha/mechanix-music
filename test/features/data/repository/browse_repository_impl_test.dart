@@ -21,14 +21,16 @@ void main() {
   }
 
   group('getMountedDrives', () {
-    test('always includes Root, even when /proc/mounts is unavailable',
-        () async {
-      final drives = await repository.getMountedDrives();
+    test(
+      'always includes Root, even when /proc/mounts is unavailable',
+      () async {
+        final drives = await repository.getMountedDrives();
 
-      expect(drives, hasLength(1));
-      expect(drives.single.title, 'Root (/)');
-      expect(drives.single.path, '/');
-    });
+        expect(drives, hasLength(1));
+        expect(drives.single.title, 'Root (/)');
+        expect(drives.single.path, '/');
+      },
+    );
 
     test('includes /dev block devices mounted under /media or /mnt', () async {
       await writeProcMounts(
@@ -108,10 +110,10 @@ void main() {
 
       final result = await repository.listDirectory('/music');
 
-      expect(
-        result.entries.map((e) => e.name).toSet(),
-        {'visible', 'song.mp3'},
-      );
+      expect(result.entries.map((e) => e.name).toSet(), {
+        'visible',
+        'song.mp3',
+      });
     });
 
     test('populates entry fields from the file system', () async {
@@ -134,9 +136,21 @@ void main() {
         await touch('/music/song_$i.mp3');
       }
 
-      final page0 = await repository.listDirectory('/music', offset: 0, limit: 2);
-      final page1 = await repository.listDirectory('/music', offset: 2, limit: 2);
-      final page2 = await repository.listDirectory('/music', offset: 4, limit: 2);
+      final page0 = await repository.listDirectory(
+        '/music',
+        offset: 0,
+        limit: 2,
+      );
+      final page1 = await repository.listDirectory(
+        '/music',
+        offset: 2,
+        limit: 2,
+      );
+      final page2 = await repository.listDirectory(
+        '/music',
+        offset: 4,
+        limit: 2,
+      );
 
       expect(page0.entries, hasLength(2));
       expect(page0.hasMore, isTrue);
@@ -161,37 +175,47 @@ void main() {
       });
     });
 
-    test('hasMore is false when the page exactly drains the directory',
-        () async {
-      await touch('/music/a.mp3');
-      await touch('/music/b.mp3');
+    test(
+      'hasMore is false when the page exactly drains the directory',
+      () async {
+        await touch('/music/a.mp3');
+        await touch('/music/b.mp3');
 
-      final result =
-          await repository.listDirectory('/music', offset: 0, limit: 2);
+        final result = await repository.listDirectory(
+          '/music',
+          offset: 0,
+          limit: 2,
+        );
 
-      expect(result.entries, hasLength(2));
-      expect(result.hasMore, isFalse);
-    });
+        expect(result.entries, hasLength(2));
+        expect(result.hasMore, isFalse);
+      },
+    );
 
     test('returns empty when offset is beyond the available entries', () async {
       await touch('/music/a.mp3');
 
-      final result =
-          await repository.listDirectory('/music', offset: 5, limit: 30);
+      final result = await repository.listDirectory(
+        '/music',
+        offset: 5,
+        limit: 30,
+      );
 
       expect(result.entries, isEmpty);
       expect(result.hasMore, isFalse);
     });
 
-    test('returns empty when the directory has no audio files or folders',
-        () async {
-      await fs.directory('/music').create(recursive: true);
-      await touch('/music/readme.txt');
+    test(
+      'returns empty when the directory has no audio files or folders',
+      () async {
+        await fs.directory('/music').create(recursive: true);
+        await touch('/music/readme.txt');
 
-      final result = await repository.listDirectory('/music');
+        final result = await repository.listDirectory('/music');
 
-      expect(result.entries, isEmpty);
-      expect(result.hasMore, isFalse);
-    });
+        expect(result.entries, isEmpty);
+        expect(result.hasMore, isFalse);
+      },
+    );
   });
 }

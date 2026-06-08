@@ -76,7 +76,11 @@ void main() {
         base.copyWith(entries: [fileA, fileB], isLoading: false, hasMore: true),
       ],
       verify: (_) => verify(
-        () => repository.listDirectory(dirPath, offset: 0, limit: Constants.pageSize),
+        () => repository.listDirectory(
+          dirPath,
+          offset: 0,
+          limit: Constants.pageSize,
+        ),
       ).called(1),
     );
 

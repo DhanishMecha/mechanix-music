@@ -12,4 +12,3 @@ abstract class PlaybackRepository {
   Future<Duration?> getDuration();
   Future<Duration?> getCurrentPosition();
 }
-

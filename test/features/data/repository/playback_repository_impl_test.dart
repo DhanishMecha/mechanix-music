@@ -158,8 +158,9 @@ void main() {
 
   group('getDuration', () {
     test('returns the duration reported by the player', () async {
-      when(() => player.getDuration())
-          .thenAnswer((_) async => const Duration(minutes: 4));
+      when(
+        () => player.getDuration(),
+      ).thenAnswer((_) async => const Duration(minutes: 4));
 
       expect(await repository.getDuration(), const Duration(minutes: 4));
     });
@@ -171,8 +172,9 @@ void main() {
     });
 
     test('propagates errors from the player', () {
-      when(() => player.getDuration())
-          .thenAnswer((_) => Future<Duration?>.error(Exception('fail')));
+      when(
+        () => player.getDuration(),
+      ).thenAnswer((_) => Future<Duration?>.error(Exception('fail')));
 
       expect(repository.getDuration(), throwsException);
     });
@@ -180,8 +182,9 @@ void main() {
 
   group('getCurrentPosition', () {
     test('returns the position reported by the player', () async {
-      when(() => player.getCurrentPosition())
-          .thenAnswer((_) async => const Duration(seconds: 12));
+      when(
+        () => player.getCurrentPosition(),
+      ).thenAnswer((_) async => const Duration(seconds: 12));
 
       expect(
         await repository.getCurrentPosition(),
@@ -196,8 +199,9 @@ void main() {
     });
 
     test('propagates errors from the player', () {
-      when(() => player.getCurrentPosition())
-          .thenAnswer((_) => Future<Duration?>.error(Exception('fail')));
+      when(
+        () => player.getCurrentPosition(),
+      ).thenAnswer((_) => Future<Duration?>.error(Exception('fail')));
 
       expect(repository.getCurrentPosition(), throwsException);
     });

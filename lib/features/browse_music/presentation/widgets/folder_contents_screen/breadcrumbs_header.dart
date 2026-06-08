@@ -42,7 +42,10 @@ class BreadcrumbsHeader extends StatelessWidget {
     } else {
       segments.add((name: rootText, path: '/'));
       if (currentPath != '/') {
-        final parts = currentPath.split('/').where((s) => s.isNotEmpty).toList();
+        final parts = currentPath
+            .split('/')
+            .where((s) => s.isNotEmpty)
+            .toList();
         String current = '';
         for (final part in parts) {
           current += '/$part';

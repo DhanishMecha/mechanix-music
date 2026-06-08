@@ -67,11 +67,7 @@ class _FolderContentsScreenState extends State<FolderContentsScreen> {
                       },
                       onPop: () => Navigator.pop(context),
                     ),
-                  Expanded(
-                    child: FolderContentsBody(
-                      state: state,
-                    ),
-                  ),
+                  Expanded(child: FolderContentsBody(state: state)),
                 ],
               ),
             ),

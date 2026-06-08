@@ -24,7 +24,10 @@ class TrackEmptyScreen extends StatelessWidget {
           ),
           Text(
             localizations!.noTracksAvailable,
-            style: const TextStyle(color: MusicColors.placeholderColor, fontSize: 18),
+            style: const TextStyle(
+              color: MusicColors.placeholderColor,
+              fontSize: 18,
+            ),
           ),
         ],
       ),

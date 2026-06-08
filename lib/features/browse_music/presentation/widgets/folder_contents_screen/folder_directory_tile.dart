@@ -9,10 +9,7 @@ import 'package:mechanix_music/features/browse_music/data/models/file_system_ent
 class FolderDirectoryTile extends StatelessWidget {
   final FileSystemEntry entry;
 
-  const FolderDirectoryTile({
-    super.key,
-    required this.entry,
-  });
+  const FolderDirectoryTile({super.key, required this.entry});
 
   void _onTap(BuildContext context) {
     final bloc = context.read<BrowseFolderBloc>();
