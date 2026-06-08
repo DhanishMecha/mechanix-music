@@ -4,7 +4,9 @@ import 'package:integration_test/integration_test.dart';
 import 'package:mechanix_music/features/browse_music/presentation/screens/folder_contents_screen.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/browse_folder_tile.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/folder_contents_screen/folder_audio_tile.dart';
+import 'package:mechanix_music/features/browse_music/presentation/widgets/folder_contents_screen/folder_directory_tile.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/folder_contents_screen/folder_content_body.dart';
+import 'package:mechanix_music/features/browse_music/presentation/widgets/folder_contents_screen/folder_content_bottom_bar.dart';
 import 'package:mechanix_music/features/browse_music/presentation/widgets/folder_contents_screen/selection_header.dart';
 
 import 'test_helper.dart';
@@ -53,9 +55,36 @@ void main() {
       expect(find.byType(FolderContentsScreen), findsOneWidget);
       expect(find.text('Browse music'), findsOneWidget);
       expect(find.byType(FolderContentsBody), findsOneWidget);
+      expect(find.byType(FolderContentBottomBar), findsOneWidget);
 
-      // ── Breadcrumb navigates back ─────────────────────────────────────────
-      await tester.tap(find.text('Browse music'));
+      // ── Folder Bottom Bar back button navigates up/back ───────────────────
+      final backButton = TestHelper.findMusicButton('assets/icons/back.png');
+      expect(backButton, findsOneWidget);
+
+      // Dynamically test navigating to a subdirectory if one exists, then going up
+      final dirTiles = find.byType(FolderDirectoryTile);
+      if (dirTiles.evaluate().isNotEmpty) {
+        final firstDir = dirTiles.first;
+        final dirWidget = tester.widget<FolderDirectoryTile>(firstDir);
+        final dirName = dirWidget.entry.name;
+
+        // Go down
+        await tester.tap(firstDir);
+        await tester.pumpAndSettle();
+
+        // Verify sub-folder loaded
+        expect(find.text(dirName), findsWidgets);
+
+        // Go back up using the bottom bar back button
+        await tester.tap(backButton);
+        await tester.pumpAndSettle();
+
+        // Should be back at parent directory (Home)
+        expect(find.byType(FolderContentsScreen), findsOneWidget);
+      }
+
+      // Tap bottom back button at the root folder level to pop the screen
+      await tester.tap(backButton);
       await TestHelper.pumpUntil(
         tester,
         () => find.byType(FolderContentsScreen).evaluate().isEmpty,
@@ -100,10 +129,24 @@ void main() {
       expect(find.byTooltip('Select all'), findsOneWidget);
       expect(find.byTooltip('Save to library'), findsOneWidget);
 
-      // --- Cancel restores breadcrumb header ---
-      await tester.tap(find.byTooltip('Cancel selection'));
+      // --- Select All toggles selection for all items ---
+      await tester.tap(find.byTooltip('Select all'));
       await tester.pump(const Duration(milliseconds: 400));
 
+      final totalAudioCount = audioTiles.evaluate().length;
+      expect(find.text('$totalAudioCount selected'), findsOneWidget);
+
+      // --- Save to library displays SnackBar and cancels selection mode ---
+      await tester.tap(find.byTooltip('Save to library'));
+      await tester.pump();
+
+      // Verify SnackBar appears (since background is Color(0xFF151515))
+      expect(find.byType(SnackBar), findsWidgets);
+
+      // Settle SnackBar durations
+      await tester.pump(const Duration(seconds: 3));
+
+      // SelectionHeader should be gone and selection mode exited
       expect(find.byType(SelectionHeader), findsNothing);
       expect(find.text('Browse music'), findsOneWidget);
     });

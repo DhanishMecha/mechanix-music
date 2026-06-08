@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mechanix_music/features/music/data/repository/playback_repository_impl.dart';
@@ -23,18 +24,36 @@ void main() {
     test('plays a DeviceFileSource built from the given url', () async {
       when(() => player.play(any())).thenAnswer((_) async {});
 
-      await repository.play('/music/song.mp3');
+      final tempFile = File('${Directory.systemTemp.path}/test_song.mp3');
+      await tempFile.create();
 
-      final captured =
-          verify(() => player.play(captureAny())).captured.single as Source;
-      expect(captured, isA<DeviceFileSource>());
-      expect((captured as DeviceFileSource).path, '/music/song.mp3');
+      try {
+        await repository.play(tempFile.path);
+
+        final captured =
+            verify(() => player.play(captureAny())).captured.single as Source;
+        expect(captured, isA<DeviceFileSource>());
+        expect((captured as DeviceFileSource).path, tempFile.path);
+      } finally {
+        if (await tempFile.exists()) {
+          await tempFile.delete();
+        }
+      }
     });
 
-    test('propagates errors from the player', () {
-      when(() => player.play(any())).thenThrow(Exception('play failed'));
+    test('propagates errors from the player', () async {
+      final tempFile = File('${Directory.systemTemp.path}/test_song.mp3');
+      await tempFile.create();
 
-      expect(repository.play('/x.mp3'), throwsException);
+      try {
+        when(() => player.play(any())).thenThrow(Exception('play failed'));
+
+        expect(repository.play(tempFile.path), throwsException);
+      } finally {
+        if (await tempFile.exists()) {
+          await tempFile.delete();
+        }
+      }
     });
   });
 

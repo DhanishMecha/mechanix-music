@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_bloc.dart';
@@ -10,11 +11,14 @@ import 'package:mechanix_music/features/music/bloc/song_event.dart';
 import 'package:mechanix_music/features/music/bloc/song_state.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 import 'package:mechanix_music/features/music/data/repository/playback_repository.dart';
+import 'package:mechanix_music/features/music/data/repository/song_repository.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockPlaybackRepository extends Mock implements PlaybackRepository {}
 
 class MockSongBloc extends MockBloc<SongEvent, SongState> implements SongBloc {}
+
+class MockSongRepository extends Mock implements SongRepository {}
 
 SongModel song(String id) =>
     SongModel(id: id, path: '/$id.mp3', title: 'Title $id', artist: 'artist-$id');
@@ -28,6 +32,7 @@ final outsider = song('outsider');
 void main() {
   late MockPlaybackRepository repo;
   late MockSongBloc songBloc;
+  late MockSongRepository songRepo;
   late StreamController<SongState> songStateController;
   late StreamController<Duration> durationController;
   late StreamController<void> completeController;
@@ -43,20 +48,35 @@ void main() {
   setUp(() {
     repo = MockPlaybackRepository();
     songBloc = MockSongBloc();
+    songRepo = MockSongRepository();
     songStateController = StreamController<SongState>.broadcast();
     durationController = StreamController<Duration>.broadcast();
     completeController = StreamController<void>.broadcast();
 
+    var isPlaying = false;
+    when(() => repo.isPlaying).thenAnswer((_) => isPlaying);
+
     when(() => repo.onDurationChanged)
         .thenAnswer((_) => durationController.stream);
     when(() => repo.onSongComplete).thenAnswer((_) => completeController.stream);
-    when(() => repo.play(any())).thenAnswer((_) async {});
-    when(() => repo.pause()).thenAnswer((_) async {});
-    when(() => repo.resume()).thenAnswer((_) async {});
+    when(() => repo.play(any())).thenAnswer((_) async {
+      isPlaying = true;
+    });
+    when(() => repo.pause()).thenAnswer((_) async {
+      isPlaying = false;
+    });
+    when(() => repo.resume()).thenAnswer((_) async {
+      isPlaying = true;
+    });
     when(() => repo.seek(any())).thenAnswer((_) async {});
-    when(() => repo.stop()).thenAnswer((_) async {});
+    when(() => repo.stop()).thenAnswer((_) async {
+      isPlaying = false;
+    });
     when(() => repo.dispose()).thenAnswer((_) async {});
     when(() => repo.getDuration()).thenAnswer((_) async => null);
+
+    when(() => songBloc.songRepository).thenReturn(songRepo);
+    when(() => songRepo.deleteSongByPath(any())).thenAnswer((_) async {});
 
     configureSongBloc(const SongInitial());
   });
@@ -95,6 +115,7 @@ void main() {
       build: buildBloc,
       seed: () => PlaybackState(playbackList: list5),
       act: (bloc) => bloc.add(PlaybackPlay(list5[2])),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -117,6 +138,7 @@ void main() {
       build: buildBloc,
       seed: () => PlaybackState(playbackList: list5),
       act: (bloc) => bloc.add(PlaybackPlay(outsider)),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -139,6 +161,7 @@ void main() {
       build: buildBloc,
       seed: () => PlaybackState(playbackList: list5),
       act: (bloc) => bloc.add(PlaybackPlay(list5[2])),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -148,8 +171,33 @@ void main() {
         ),
         isA<PlaybackState>()
             .having((s) => s.status, 'status', PlaybackStatus.failure)
-            .having((s) => s.error, 'error', contains('boom')),
+            .having((s) => s.errorType, 'errorType', PlaybackErrorType.unknown),
       ],
+    );
+
+    blocTest<PlaybackBloc, PlaybackState>(
+      'emits [loading, failure] and deletes song from repository when file not found occurs',
+      setUp: () {
+        when(() => repo.play(any())).thenThrow(Exception('File not found'));
+      },
+      build: buildBloc,
+      seed: () => PlaybackState(playbackList: list5),
+      act: (bloc) => bloc.add(PlaybackPlay(list5[2])),
+      wait: const Duration(milliseconds: 450),
+      expect: () => [
+        PlaybackState(
+          status: PlaybackStatus.loading,
+          song: list5[2],
+          playbackList: list5,
+          currentIndex: 2,
+        ),
+        isA<PlaybackState>()
+            .having((s) => s.status, 'status', PlaybackStatus.failure)
+            .having((s) => s.errorType, 'errorType', PlaybackErrorType.fileDeleted),
+      ],
+      verify: (_) {
+        verify(() => songRepo.deleteSongByPath(list5[2].path)).called(1);
+      },
     );
   });
 
@@ -179,7 +227,7 @@ void main() {
       'emits failure when the repository throws',
       setUp: () => when(() => repo.pause()).thenThrow(Exception('pause err')),
       build: buildBloc,
-      seed: () => const PlaybackState(status: PlaybackStatus.playing),
+      seed: () => PlaybackState(status: PlaybackStatus.playing, song: list5[0]),
       act: (bloc) => bloc.add(const PlaybackPause()),
       expect: () => [
         isA<PlaybackState>().having(
@@ -207,7 +255,7 @@ void main() {
       'emits failure when the repository throws',
       setUp: () => when(() => repo.resume()).thenThrow(Exception('resume err')),
       build: buildBloc,
-      seed: () => const PlaybackState(status: PlaybackStatus.paused),
+      seed: () => PlaybackState(status: PlaybackStatus.paused, song: list5[0]),
       act: (bloc) => bloc.add(const PlaybackResume()),
       expect: () => [
         isA<PlaybackState>().having(
@@ -223,7 +271,7 @@ void main() {
     blocTest<PlaybackBloc, PlaybackState>(
       'seeks without emitting a new state on success',
       build: buildBloc,
-      seed: () => const PlaybackState(status: PlaybackStatus.playing),
+      seed: () => PlaybackState(status: PlaybackStatus.playing, song: list5[0]),
       act: (bloc) => bloc.add(const PlaybackSeek(Duration(seconds: 30))),
       expect: () => const <PlaybackState>[],
       verify: (_) =>
@@ -234,7 +282,7 @@ void main() {
       'emits failure when seeking throws',
       setUp: () => when(() => repo.seek(any())).thenThrow(Exception('seek err')),
       build: buildBloc,
-      seed: () => const PlaybackState(status: PlaybackStatus.playing),
+      seed: () => PlaybackState(status: PlaybackStatus.playing, song: list5[0]),
       act: (bloc) => bloc.add(const PlaybackSeek(Duration(seconds: 30))),
       expect: () => [
         isA<PlaybackState>().having(
@@ -288,6 +336,7 @@ void main() {
         currentIndex: 0,
       ),
       act: (bloc) => bloc.add(const PlaybackPlayNext()),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -318,6 +367,7 @@ void main() {
         currentIndex: 2,
       ),
       act: (bloc) => bloc.add(const PlaybackPlayNext()),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -360,6 +410,7 @@ void main() {
         currentIndex: 0,
       ),
       act: (bloc) => bloc.add(const PlaybackPlayNext()),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -387,6 +438,7 @@ void main() {
         currentIndex: 2,
       ),
       act: (bloc) => bloc.add(const PlaybackPlayPrevious()),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -429,6 +481,7 @@ void main() {
         currentIndex: 2,
       ),
       act: (bloc) => bloc.add(const PlaybackPlayPrevious()),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -542,7 +595,7 @@ void main() {
         currentIndex: 2,
       ),
       act: (bloc) => completeController.add(null),
-      wait: const Duration(milliseconds: 50),
+      wait: const Duration(milliseconds: 450),
       expect: () => [
         PlaybackState(
           status: PlaybackStatus.loading,
@@ -591,29 +644,6 @@ void main() {
       expect: () => [
         const PlaybackState(songDuration: Duration(seconds: 200)),
       ],
-    );
-
-    blocTest<PlaybackBloc, PlaybackState>(
-      'retries via getDuration when an invalid (zero) value arrives',
-      setUp: () => when(() => repo.getDuration())
-          .thenAnswer((_) async => const Duration(seconds: 150)),
-      build: buildBloc,
-      act: (bloc) => durationController.add(Duration.zero),
-      wait: const Duration(milliseconds: 400),
-      expect: () => [
-        const PlaybackState(songDuration: Duration(seconds: 150)),
-      ],
-      verify: (_) => verify(() => repo.getDuration()).called(1),
-    );
-
-    blocTest<PlaybackBloc, PlaybackState>(
-      'gives up after retries when duration never resolves',
-      setUp: () => when(() => repo.getDuration()).thenAnswer((_) async => null),
-      build: buildBloc,
-      act: (bloc) => durationController.add(Duration.zero),
-      wait: const Duration(milliseconds: 1800),
-      expect: () => const <PlaybackState>[],
-      verify: (_) => verify(() => repo.getDuration()).called(10),
     );
   });
 

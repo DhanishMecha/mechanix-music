@@ -21,7 +21,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(1, 988103931647091532),
     name: 'SongModel',
-    lastPropertyId: const obx_int.IdUid(8, 839779074879433370),
+    lastPropertyId: const obx_int.IdUid(10, 833339340596564512),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -72,6 +72,18 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(8, 839779074879433370),
         name: 'artworkPath',
         type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 8150190735544892401),
+        name: 'lastScannedAt',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 833339340596564512),
+        name: 'isExternal',
+        type: 1,
         flags: 0,
       ),
     ],
@@ -158,7 +170,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final artworkPathOffset = object.artworkPath == null
             ? null
             : fbb.writeString(object.artworkPath!);
-        fbb.startTable(9);
+        fbb.startTable(11);
         fbb.addInt64(0, object.obxId);
         fbb.addOffset(1, idOffset);
         fbb.addOffset(2, pathOffset);
@@ -167,6 +179,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(5, albumOffset);
         fbb.addOffset(6, durationOffset);
         fbb.addOffset(7, artworkPathOffset);
+        fbb.addInt64(8, object.lastScannedAt.millisecondsSinceEpoch);
+        fbb.addBool(9, object.isExternal);
         fbb.finish(fbb.endTable());
         return object.obxId;
       },
@@ -200,6 +214,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final artworkPathParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 18);
+        final lastScannedAtParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 20, 0),
+        );
+        final isExternalParam = const fb.BoolReader().vTableGet(
+          buffer,
+          rootOffset,
+          22,
+          false,
+        );
         final object = SongModel(
           obxId: obxIdParam,
           id: idParam,
@@ -209,6 +232,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           album: albumParam,
           duration: durationParam,
           artworkPath: artworkPathParam,
+          lastScannedAt: lastScannedAtParam,
+          isExternal: isExternalParam,
         );
 
         return object;
@@ -259,5 +284,15 @@ class SongModel_ {
   /// See [SongModel.artworkPath].
   static final artworkPath = obx.QueryStringProperty<SongModel>(
     _entities[0].properties[7],
+  );
+
+  /// See [SongModel.lastScannedAt].
+  static final lastScannedAt = obx.QueryDateProperty<SongModel>(
+    _entities[0].properties[8],
+  );
+
+  /// See [SongModel.isExternal].
+  static final isExternal = obx.QueryBooleanProperty<SongModel>(
+    _entities[0].properties[9],
   );
 }

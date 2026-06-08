@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/features/music/bloc/song_bloc.dart';
 import 'package:mechanix_music/features/music/bloc/song_event.dart';
 import 'package:mechanix_music/features/music/bloc/song_state.dart';
@@ -58,11 +59,11 @@ void main() {
     final page = songs(2);
 
     blocTest<SongBloc, SongState>(
-      'syncs the library then emits [SongLoading, SongLoaded] with hasMore '
-      'false when all songs fit on one page',
+      'loads the cache immediately then emits [SongLoading, SongLoaded] with '
+      'hasMore false when all songs fit on one page and no changes detected',
       setUp: () {
         when(() => repository.syncInitialSongLibrary())
-            .thenAnswer((_) async => true);
+            .thenAnswer((_) async => false);
         when(() => repository.getSongs(offset: 0, limit: 20))
             .thenAnswer((_) async => page);
         when(() => repository.getSongCount()).thenAnswer((_) async => 2);
@@ -79,13 +80,53 @@ void main() {
       },
     );
 
+    blocTest<SongBloc, SongState>(
+      'loads cache immediately, runs sync in background, and reloads on changes',
+      setUp: () {
+        when(() => repository.syncInitialSongLibrary())
+            .thenAnswer((_) async => true);
+        when(() => repository.getSongs(offset: 0, limit: 20))
+            .thenAnswer((_) async => page);
+        when(() => repository.getSongCount()).thenAnswer((_) async => 2);
+      },
+      build: buildBloc,
+      act: (bloc) => bloc.add(const SongInitialized()),
+      expect: () => [
+        const SongLoading(),
+        SongLoaded(songs: page, hasMore: false),
+      ],
+      verify: (_) {
+        verify(() => repository.syncInitialSongLibrary()).called(1);
+        // Initial load + post-sync reload = 2 calls
+        verify(() => repository.getSongs(offset: 0, limit: 20)).called(2);
+      },
+    );
+
+    blocTest<SongBloc, SongState>(
+      'reloads the first page when SongSyncCompleted is added',
+      setUp: () {
+        when(() => repository.getSongs(offset: 0, limit: 20))
+            .thenAnswer((_) async => page);
+        when(() => repository.getSongCount()).thenAnswer((_) async => 2);
+      },
+      build: buildBloc,
+      seed: () => const SongLoaded(songs: [], hasMore: false),
+      act: (bloc) => bloc.add(const SongSyncCompleted()),
+      expect: () => [
+        SongLoaded(songs: page, hasMore: false),
+      ],
+      verify: (_) {
+        verify(() => repository.getSongs(offset: 0, limit: 20)).called(1);
+      },
+    );
+
     final fullPage = songs(20);
 
     blocTest<SongBloc, SongState>(
       'emits hasMore true when total count exceeds the first page',
       setUp: () {
         when(() => repository.syncInitialSongLibrary())
-            .thenAnswer((_) async => true);
+            .thenAnswer((_) async => false);
         when(() => repository.getSongs(offset: 0, limit: 20))
             .thenAnswer((_) async => fullPage);
         when(() => repository.getSongCount()).thenAnswer((_) async => 50);
@@ -102,7 +143,7 @@ void main() {
       'emits [SongLoading, SongError] when fetching the page throws',
       setUp: () {
         when(() => repository.syncInitialSongLibrary())
-            .thenAnswer((_) async => true);
+            .thenAnswer((_) async => false);
         when(() => repository.getSongs(offset: 0, limit: 20))
             .thenThrow(Exception('db down'));
       },
@@ -140,7 +181,7 @@ void main() {
       're-initializing resets the offset and reloads from the first page',
       setUp: () {
         when(() => repository.syncInitialSongLibrary())
-            .thenAnswer((_) async => true);
+            .thenAnswer((_) async => false);
         when(() => repository.getSongs(offset: 0, limit: 20))
             .thenAnswer((_) async => reinitPage);
         when(() => repository.getSongCount()).thenAnswer((_) async => 2);
@@ -306,7 +347,7 @@ void main() {
   group('offset bookkeeping', () {
     void stubInitialPage() {
       when(() => repository.syncInitialSongLibrary())
-          .thenAnswer((_) async => true);
+          .thenAnswer((_) async => false);
       when(() => repository.getSongs(offset: 0, limit: 20))
           .thenAnswer((_) async => songs(20));
       when(() => repository.getSongCount()).thenAnswer((_) async => 50);

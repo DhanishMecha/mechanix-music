@@ -7,4 +7,5 @@ abstract class SongRepository {
   Future<int> getSongCount();
   Stream<SongChange> get onSongChanged;
   Future<void> addSongsByPaths(List<String> paths);
+  Future<void> deleteSongByPath(String path);
 }

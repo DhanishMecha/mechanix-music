@@ -21,6 +21,7 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     on<SongUpsert>(_onSongUpsert);
     on<SongDelete>(_onSongDelete);
     on<SongAddByPaths>(_onSongAddByPaths);
+    on<SongSyncCompleted>(_onSongSyncCompleted);
 
     _songChangedSub = songRepository.onSongChanged.listen((change) {
       switch (change.type) {
@@ -45,21 +46,40 @@ class SongBloc extends Bloc<SongEvent, SongState> {
     emit(const SongLoading());
     _currentOffset = 0;
 
+    // Load first page immediately from cache
     try {
-      AppLogger.i('[SongBloc] Syncing library');
-      await songRepository.syncInitialSongLibrary();
-    } catch (e) {
-      AppLogger.e('[SongBloc] Syncing library failed: $e');
-      emit(const SongError(SongErrorType.syncFailed));
-      return;
-    }
-
-    try {
-      AppLogger.i('[SongBloc] Loading first page');
+      AppLogger.i('[SongBloc] Loading first page from cache');
       await _fetchPage(emit);
     } catch (e) {
       AppLogger.e('[SongBloc] Loading first page failed: $e');
       emit(const SongError(SongErrorType.loadFailed));
+      return;
+    }
+
+    // Run sync in the background
+    unawaited(
+      songRepository.syncInitialSongLibrary().then((changesDetected) {
+        AppLogger.i('[SongBloc] Background sync completed (changesDetected: $changesDetected)');
+        final isEmpty = state is SongLoaded && (state as SongLoaded).songs.isEmpty;
+        if (changesDetected || isEmpty) {
+          add(const SongSyncCompleted());
+        }
+      }).catchError((e) {
+        AppLogger.e('[SongBloc] Background sync failed: $e');
+      }),
+    );
+  }
+
+  Future<void> _onSongSyncCompleted(
+    SongSyncCompleted event,
+    Emitter<SongState> emit,
+  ) async {
+    _currentOffset = 0;
+    try {
+      AppLogger.i('[SongBloc] Reloading first page after sync completed');
+      await _fetchPage(emit);
+    } catch (e) {
+      AppLogger.e('[SongBloc] Reloading first page failed: $e');
     }
   }
 

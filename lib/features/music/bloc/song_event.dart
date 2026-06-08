@@ -39,3 +39,7 @@ final class SongAddByPaths extends SongEvent {
   @override
   List<Object?> get props => [paths];
 }
+
+final class SongSyncCompleted extends SongEvent {
+  const SongSyncCompleted();
+}

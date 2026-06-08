@@ -139,6 +139,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
               errorType: PlaybackErrorType.fileDeleted,
             ),
           );
+          unawaited(_songBloc.songRepository.deleteSongByPath(event.song.path));
         } else {
           emit(
             state.copyWith(
@@ -155,12 +156,7 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       await completer.future;
       emit(state.copyWith(status: PlaybackStatus.playing));
     } catch (e) {
-      emit(
-        state.copyWith(
-          status: PlaybackStatus.failure,
-          errorType: PlaybackErrorType.unknown,
-        ),
-      );
+      // Debounce timer catch block already emitted the failure state.
     }
   }
 

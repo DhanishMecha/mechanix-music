@@ -13,6 +13,8 @@ class FileScannerService {
   // Artwork cache dir — initialized once on first use
   Directory? _artworkCacheDir;
 
+  FileScannerService({Directory? artworkCacheDir}) : _artworkCacheDir = artworkCacheDir;
+
   /// Scans [dirPath] (non-recursive) for audio files.
   Future<Map<String, SongModel>> scanDirectory(String dirPath) async {
     final result = <String, SongModel>{};

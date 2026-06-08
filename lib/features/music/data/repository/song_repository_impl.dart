@@ -10,23 +10,37 @@ import 'package:mechanix_music/features/music/data/models/song_change.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 import 'package:mechanix_music/features/music/data/repository/song_repository.dart';
 import 'package:mechanix_music/objectbox.g.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'dart:isolate';
 
 class SongRepositoryImpl extends SongRepository {
   SongRepositoryImpl({
     FileScannerService? fileScannerService,
     Store? store,
     String Function()? musicDirectoryProvider,
+    FutureOr<String> Function()? artworkCacheDirectoryProvider,
   }) : _fileScannerService = fileScannerService ?? FileScannerService(),
        _musicDirectoryProvider = musicDirectoryProvider ?? getMusicDirectory,
+       _artworkCacheDirectoryProvider = artworkCacheDirectoryProvider,
        _store = store {
-    if (store != null) _box = store.box<SongModel>();
+    if (store != null) {
+      _box = store.box<SongModel>();
+      try {
+        _dbDirectoryPath = store.directoryPath;
+      } catch (_) {
+        // Fallback if directoryPath is not accessible/supported in this state
+      }
+    }
   }
 
   final FileScannerService _fileScannerService;
   final String Function() _musicDirectoryProvider;
+  final FutureOr<String> Function()? _artworkCacheDirectoryProvider;
 
   Store? _store;
   Box<SongModel>? _box;
+  String? _dbDirectoryPath;
 
   StreamSubscription<FileSystemEvent>? _watcherSubscription;
   final Map<String, Timer> _debounceTimers = {};
@@ -64,6 +78,7 @@ class SongRepositoryImpl extends SongRepository {
 
       _store = openStore(directory: appDir.path);
       _box = _store!.box<SongModel>();
+      _dbDirectoryPath = appDir.path;
 
       AppLogger.i('[SongRepository] ObjectBox store opened at ${appDir.path}');
     } catch (e) {
@@ -94,22 +109,41 @@ class SongRepositoryImpl extends SongRepository {
       await ensureStoreConnected();
       final musicDir = _musicDirectoryProvider();
 
-      final diskMap = await _fileScannerService.scanDirectory(musicDir);
+      String artworkCacheDirPath;
+      final provider = _artworkCacheDirectoryProvider;
+      if (provider != null) {
+        artworkCacheDirPath = await provider();
+      } else {
+        final appSupportDir = await getApplicationSupportDirectory();
+        artworkCacheDirPath = Directory('${appSupportDir.path}/artworks').path;
+      }
 
-      final incomingSongs = diskMap.values.toList();
+      final dbPath = _dbDirectoryPath ?? _store!.directoryPath;
+      final args = _SyncIsolateArgs(
+        dbDirectoryPath: dbPath,
+        musicDir: musicDir,
+        artworkCacheDirPath: artworkCacheDirPath,
+      );
 
-      _store!.runInTransaction(TxMode.write, () {
-        _box!.removeAll();
-        _box!.putMany(incomingSongs);
-      });
+      final isTest = Platform.environment.containsKey('FLUTTER_TEST');// for Unit test only.
+      final changesDetected = isTest
+          ? await _syncInitialSongLibraryIsolate(
+              args,
+              store: _store,
+              box: _box,
+              scanner: _fileScannerService,
+            )
+          : await Isolate.run<bool>(
+              () => _syncInitialSongLibraryIsolate(args),
+            );
 
       AppLogger.i(
-        '[SongRepository] Synced ${incomingSongs.length} songs from '
+        '[SongRepository] Sync initial library completed (changesDetected: $changesDetected) for '
         '$musicDir',
       );
 
       _startWatcher();
-      return true;
+      return changesDetected;
     } on AppAlreadyRunningException catch (_) {
       rethrow;
     } catch (e) {
@@ -162,6 +196,7 @@ class SongRepositoryImpl extends SongRepository {
       '${newPaths.length} to import',
     );
 
+    final musicDir = _musicDirectoryProvider();
     for (final path in newPaths) {
       try {
         final song = await _fileScannerService.buildSongModel(path);
@@ -169,6 +204,8 @@ class SongRepositoryImpl extends SongRepository {
           AppLogger.i('[SongRepository] Could not build model for: $path');
           continue;
         }
+
+        song.isExternal = !p.isWithin(musicDir, path);
 
         _box!.put(song);
         AppLogger.i('[SongRepository] Added to library: ${song.title}');
@@ -179,12 +216,37 @@ class SongRepositoryImpl extends SongRepository {
     }
   }
 
+  @override
+  Future<void> deleteSongByPath(String path) async {
+    await ensureStoreConnected();
+    final existing = _box!
+        .query(SongModel_.path.equals(path))
+        .build()
+        .findFirst();
+
+    if (existing != null) {
+      _box!.remove(existing.obxId);
+      AppLogger.i('[SongRepository] Deleted song by path: $path');
+      _onSongChanged.add(
+        SongChange(type: SongChangeType.delete, song: existing),
+      );
+    }
+  }
+
   // ── Watcher ──────────────────────────────────────────────────────────────
 
   void _startWatcher() {
     _watcherSubscription?.cancel();
+    _watcherSubscription = null;
+
     final musicDir = _musicDirectoryProvider();
-    _watcherSubscription = Directory(musicDir).watch(recursive: false).listen((
+    final dir = Directory(musicDir);
+    if (!dir.existsSync()) {
+      AppLogger.i('[FileWatcher] Music directory does not exist: $musicDir. Skipping watcher.');
+      return;
+    }
+
+    _watcherSubscription = dir.watch(recursive: false).listen((
       event,
     ) {
       if (!isAudioFile(event.path)) return;
@@ -233,7 +295,12 @@ class SongRepositoryImpl extends SongRepository {
           .build()
           .findFirst();
 
-      if (existing != null) song.obxId = existing.obxId;
+      if (existing != null) {
+        song.obxId = existing.obxId;
+        song.isExternal = existing.isExternal;
+      } else {
+        song.isExternal = false;
+      }
 
       _box!.put(song);
       AppLogger.i('[FileWatcher] Upserted: $path');
@@ -278,6 +345,7 @@ class SongRepositoryImpl extends SongRepository {
       if (updated == null) return;
 
       updated.obxId = existing.obxId;
+      updated.isExternal = existing.isExternal;
       _box!.put(updated);
 
       AppLogger.i('[FileWatcher] Moved: $oldPath → $newPath');
@@ -292,5 +360,139 @@ class SongRepositoryImpl extends SongRepository {
   bool isAudioFile(String path) {
     final lower = path.toLowerCase();
     return Constants.audioExt.any((ext) => lower.endsWith(ext));
+  }
+}
+
+class _SyncIsolateArgs {
+  final String dbDirectoryPath;
+  final String musicDir;
+  final String artworkCacheDirPath;
+
+  _SyncIsolateArgs({
+    required this.dbDirectoryPath,
+    required this.musicDir,
+    required this.artworkCacheDirPath,
+  });
+}
+
+Future<bool> _syncInitialSongLibraryIsolate(
+  _SyncIsolateArgs args, {
+  Store? store,
+  Box<SongModel>? box,
+  FileScannerService? scanner,
+}) async {
+  // 1. Attach to store if store is not provided
+  final storeToUse = store ??
+      Store.attach(getObjectBoxModel(), args.dbDirectoryPath);
+  final boxToUse = box ?? storeToUse.box<SongModel>();
+
+  try {
+    // 2. Fetch cached songs from DB using separate queries based on isExternal
+    final internalStoredSongs =
+        boxToUse.query(SongModel_.isExternal.equals(false)).build().find();
+    final externalStoredSongs =
+        boxToUse.query(SongModel_.isExternal.equals(true)).build().find();
+
+    final storedSongsByPath = <String, SongModel>{};
+    for (final s in internalStoredSongs) {
+      storedSongsByPath[s.path] = s;
+    }
+    for (final s in externalStoredSongs) {
+      storedSongsByPath[s.path] = s;
+    }
+
+    final internalStoredPaths = internalStoredSongs.map((s) => s.path).toSet();
+
+    // 3. Scan directory and identify updates/new files in O(1)
+    final dir = Directory(args.musicDir);
+    final diskPaths = <String>{};
+    final newOrModifiedFiles = <File>[];
+
+    if (await dir.exists()) {
+      await for (final entity in dir.list(recursive: false)) {
+        if (entity is File) {
+          final ext = p.extension(entity.path).toLowerCase();
+          if (Constants.audioExt.contains(ext)) {
+            final path = entity.path;
+            diskPaths.add(path);
+
+            final stored = storedSongsByPath[path];
+            if (stored == null) {
+              newOrModifiedFiles.add(entity);
+            } else {
+              // Check modification time
+              final stat = await entity.stat();
+              if (stat.modified.isAfter(stored.lastScannedAt)) {
+                newOrModifiedFiles.add(entity);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 4. Compute changes for internal and external songs
+    // Deleted internal songs: present in DB under musicDir, but not on disk
+    final toRemovePaths = internalStoredPaths.difference(diskPaths);
+    final toRemoveIds = toRemovePaths
+        .map((path) => storedSongsByPath[path]?.obxId)
+        .whereType<int>()
+        .toList();
+
+    // Deleted external/custom songs: check direct existence on disk
+    for (final song in externalStoredSongs) {
+      try {
+        if (!await File(song.path).exists()) {
+          toRemoveIds.add(song.obxId);
+        }
+      } catch (e) {
+        AppLogger.e('Error checking existence of custom song ${song.path}: $e');
+        toRemoveIds.add(song.obxId);
+      }
+    }
+
+    final hasChanges = toRemoveIds.isNotEmpty || newOrModifiedFiles.isNotEmpty;
+    if (!hasChanges) {
+      return false;
+    }
+
+    // 5. Scan metadata for new/modified files in the isolate
+    final scannerToUse = scanner ??
+        FileScannerService(
+          artworkCacheDir: Directory(args.artworkCacheDirPath),
+        );
+
+    final updatedSongs = <SongModel>[];
+    for (final file in newOrModifiedFiles) {
+      final song = await scannerToUse.buildSongModel(file.path);
+      if (song == null) continue;
+
+      final stored = storedSongsByPath[file.path];
+      if (stored != null) {
+        song.obxId = stored.obxId;
+        song.id = stored.id;
+        song.isExternal = stored.isExternal;
+      } else {
+        song.isExternal = false;
+      }
+      song.lastScannedAt = DateTime.now().toUtc();
+      updatedSongs.add(song);
+    }
+
+    // 6. Update DB inside a transaction
+    storeToUse.runInTransaction(TxMode.write, () {
+      if (toRemoveIds.isNotEmpty) {
+        boxToUse.removeMany(toRemoveIds);
+      }
+      if (updatedSongs.isNotEmpty) {
+        boxToUse.putMany(updatedSongs);
+      }
+    });
+
+    return true;
+  } finally {
+    if (store == null) {
+      storeToUse.close();
+    }
   }
 }

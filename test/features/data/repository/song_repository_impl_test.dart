@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mechanix_music/core/services/file_scanner_service.dart';
+import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/features/music/data/models/song_change.dart';
 import 'package:mechanix_music/features/music/data/models/song_model.dart';
 import 'package:mechanix_music/features/music/data/repository/song_repository_impl.dart';
@@ -14,6 +15,7 @@ void main() {
   late Store store;
   late Box<SongModel> box;
   late MockFileScannerService scanner;
+  late Directory tempDbDir;
   late Directory tempMusicDir;
   late SongRepositoryImpl repository;
 
@@ -24,35 +26,47 @@ void main() {
     );
   });
 
+  late Directory tempArtworkDir;
+
   setUp(() async {
+    tempDbDir = await Directory.systemTemp.createTemp('repo_test_db_');
     store = Store(
       getObjectBoxModel(),
-      directory: 'memory:test-${DateTime.now().microsecondsSinceEpoch}',
+      directory: tempDbDir.path,
     );
     box = store.box<SongModel>();
     scanner = MockFileScannerService();
     tempMusicDir = await Directory.systemTemp.createTemp('repo_test_music_');
+    tempArtworkDir = await Directory.systemTemp.createTemp('repo_test_artwork_');
 
     repository = SongRepositoryImpl(
       fileScannerService: scanner,
       store: store,
       musicDirectoryProvider: () => tempMusicDir.path,
+      artworkCacheDirectoryProvider: () => tempArtworkDir.path,
     );
   });
 
   tearDown(() async {
     repository.closeStore();
     if (!store.isClosed()) store.close();
+    if (await tempDbDir.exists()) {
+      await tempDbDir.delete(recursive: true);
+    }
     if (await tempMusicDir.exists()) {
       await tempMusicDir.delete(recursive: true);
     }
+    if (await tempArtworkDir.exists()) {
+      await tempArtworkDir.delete(recursive: true);
+    }
   });
 
-  SongModel makeSong(String id, String path, String title) => SongModel(
+  SongModel makeSong(String id, String path, String title, {bool isExternal = false}) => SongModel(
     id: id,
     path: path,
     title: title,
     artist: 'artist-$id',
+    isExternal: isExternal,
   );
 
   group('getSongs', () {
@@ -155,38 +169,147 @@ void main() {
       expect(await repository.getSongCount(), 0);
       verify(() => scanner.buildSongModel('/broken.mp3')).called(1);
     });
+
+    test('correctly marks songs as internal or external based on their path', () async {
+      final internalPath = '${tempMusicDir.path}/internal.mp3';
+      final externalPath = '/some/other/dir/external.mp3';
+
+      when(() => scanner.buildSongModel(internalPath)).thenAnswer(
+        (_) async => makeSong('internal', internalPath, 'Internal'),
+      );
+      when(() => scanner.buildSongModel(externalPath)).thenAnswer(
+        (_) async => makeSong('external', externalPath, 'External'),
+      );
+
+      await repository.addSongsByPaths([internalPath, externalPath]);
+
+      final storedInternal = box.getAll().firstWhere((s) => s.path == internalPath);
+      final storedExternal = box.getAll().firstWhere((s) => s.path == externalPath);
+
+      expect(storedInternal.isExternal, isFalse);
+      expect(storedExternal.isExternal, isTrue);
+    });
+  });
+
+  group('deleteSongByPath', () {
+    test('removes the song from the database and emits a delete change event', () async {
+      final songPath = '/to_delete.mp3';
+      box.put(makeSong('to_delete', songPath, 'To Delete'));
+
+      expect(await repository.getSongCount(), 1);
+
+      final changes = expectLater(
+        repository.onSongChanged,
+        emits(
+          isA<SongChange>()
+              .having((c) => c.type, 'type', SongChangeType.delete)
+              .having((c) => c.song.path, 'path', songPath),
+        ),
+      );
+
+      await repository.deleteSongByPath(songPath);
+      await changes;
+
+      expect(await repository.getSongCount(), 0);
+    });
+
+    test('does nothing if the song does not exist', () async {
+      await repository.deleteSongByPath('/non_existent.mp3');
+      expect(await repository.getSongCount(), 0);
+    });
   });
 
   group('syncInitialSongLibrary', () {
-    test('replaces the library with the scanned songs and returns true',
+    test('syncs new files, removes deleted ones, and returns true when changes detected',
         () async {
-      box.put(makeSong('stale', '/old.mp3', 'Stale'));
+      final fileStalePath = '${tempMusicDir.path}/stale.mp3';
+      box.put(makeSong('stale', fileStalePath, 'Stale'));
 
-      when(() => scanner.scanDirectory(tempMusicDir.path)).thenAnswer(
-        (_) async => {
-          'a': makeSong('a', '/songs/a.mp3', 'A'),
-          'b': makeSong('b', '/songs/b.mp3', 'B'),
-        },
+      final fileAPath = '${tempMusicDir.path}/a.mp3';
+      final fileBPath = '${tempMusicDir.path}/b.mp3';
+      await File(fileAPath).create();
+      await File(fileBPath).create();
+
+      when(() => scanner.buildSongModel(fileAPath)).thenAnswer(
+        (_) async => makeSong('a', fileAPath, 'A'),
+      );
+      when(() => scanner.buildSongModel(fileBPath)).thenAnswer(
+        (_) async => makeSong('b', fileBPath, 'B'),
       );
 
       final result = await repository.syncInitialSongLibrary();
 
       expect(result, isTrue);
       final paths = box.getAll().map((s) => s.path).toSet();
-      expect(paths, {'/songs/a.mp3', '/songs/b.mp3'});
+      expect(paths, {fileAPath, fileBPath});
     });
 
-    test('returns false when scanning throws', () async {
-      box.put(makeSong('stale', '/old.mp3', 'Stale'));
-
-      when(() => scanner.scanDirectory(tempMusicDir.path))
-          .thenThrow(Exception('scan failed'));
+    test('returns false when no changes are detected', () async {
+      final fileAPath = '${tempMusicDir.path}/a.mp3';
+      await File(fileAPath).create();
+      
+      final songA = makeSong('a', fileAPath, 'A');
+      box.put(songA);
 
       final result = await repository.syncInitialSongLibrary();
 
       expect(result, isFalse);
-      // Existing data should be untouched because the transaction never ran.
-      expect(box.getAll().single.path, '/old.mp3');
+      expect(box.getAll().single.path, fileAPath);
+    });
+
+    test('clears database and returns true when music directory does not exist', () async {
+      box.put(makeSong('stale', '/old.mp3', 'Stale'));
+      await tempMusicDir.delete(recursive: true);
+
+      final result = await repository.syncInitialSongLibrary();
+
+      expect(result, isTrue);
+      expect(box.getAll(), isEmpty);
+    });
+
+    test('preserves custom external songs during folder sync if they still exist on disk', () async {
+      // 1. Create a dummy external file
+      final tempExternalDir = await Directory.systemTemp.createTemp('repo_test_external_');
+      final externalFilePath = '${tempExternalDir.path}/custom.mp3';
+      final externalFile = File(externalFilePath);
+      await externalFile.create();
+
+      // 2. Put it in the DB
+      final customSong = makeSong('custom', externalFilePath, 'Custom File', isExternal: true);
+      box.put(customSong);
+
+      // 3. Put an internal song in DB (which will be deleted since it is not on disk)
+      final internalFilePath = '${tempMusicDir.path}/stale.mp3';
+      box.put(makeSong('stale', internalFilePath, 'Stale'));
+
+      // 4. Run sync
+      final result = await repository.syncInitialSongLibrary();
+
+      // Should return true (since changes were made: 'stale' was deleted)
+      expect(result, isTrue);
+
+      // Verify custom file is still in the DB, but stale song is deleted
+      final storedPaths = box.getAll().map((s) => s.path).toSet();
+      expect(storedPaths, {externalFilePath});
+
+      // Cleanup
+      await tempExternalDir.delete(recursive: true);
+    });
+
+    test('deletes custom external songs during folder sync if they no longer exist on disk', () async {
+      // 1. Put a missing external file path in DB (without creating it on disk)
+      final externalFilePath = '/nonexistent/external_song.mp3';
+      final customSong = makeSong('custom', externalFilePath, 'Custom File', isExternal: true);
+      box.put(customSong);
+
+      // 2. Run sync
+      final result = await repository.syncInitialSongLibrary();
+
+      // Should return true (since changes were made: missing custom file deleted)
+      expect(result, isTrue);
+
+      // Verify DB is empty
+      expect(box.getAll(), isEmpty);
     });
   });
 }

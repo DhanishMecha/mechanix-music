@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "1:988103931647091532",
-      "lastPropertyId": "8:839779074879433370",
+      "lastPropertyId": "10:833339340596564512",
       "name": "SongModel",
       "properties": [
         {
@@ -52,6 +52,16 @@
           "id": "8:839779074879433370",
           "name": "artworkPath",
           "type": 9
+        },
+        {
+          "id": "9:8150190735544892401",
+          "name": "lastScannedAt",
+          "type": 10
+        },
+        {
+          "id": "10:833339340596564512",
+          "name": "isExternal",
+          "type": 1
         }
       ],
       "relations": []
