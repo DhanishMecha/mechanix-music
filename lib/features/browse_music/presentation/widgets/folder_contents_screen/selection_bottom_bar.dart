@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/music/bloc/song_bloc.dart';
@@ -24,7 +25,7 @@ class SelectionBottomBar extends StatelessWidget {
           localizations.savingSongs(pathsToSave.length),
           style: const TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF151515),
+        backgroundColor: MusicColors.bottomBarBg,
         duration: const Duration(milliseconds: 500),
       ),
     );
@@ -55,28 +56,28 @@ class SelectionBottomBar extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: const BoxDecoration(
-        color: Color(0xFF151515),
-        border: Border(top: BorderSide(color: Color(0xFF1C1C1C), width: 1)),
+        color: MusicColors.bottomBarBg,
+        border: Border(top: BorderSide(color: MusicColors.dividerColor, width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.close, color: Color(0xFFDDDDDD), size: 28),
+            icon: const Icon(Icons.close, color: MusicColors.titleColor, size: 28),
             onPressed: () => bloc.add(const BrowseFolderSetSelectionMode()),
             tooltip: localizations!.tooltipCancel,
           ),
           IconButton(
             icon: const Icon(
               Icons.check_circle_outline,
-              color: Color(0xFFDDDDDD),
+              color: MusicColors.titleColor,
               size: 28,
             ),
             onPressed: () => bloc.add(const BrowseFolderSelectAll()),
             tooltip: localizations.tooltipSelectAll,
           ),
           IconButton(
-            icon: const Icon(Icons.check, color: Color(0xFFDDDDDD), size: 28),
+            icon: const Icon(Icons.check, color: MusicColors.titleColor, size: 28),
             onPressed: () => _saveToObjectBox(context, bloc.state.selectedPaths),
             tooltip: localizations.tooltipSave,
           ),

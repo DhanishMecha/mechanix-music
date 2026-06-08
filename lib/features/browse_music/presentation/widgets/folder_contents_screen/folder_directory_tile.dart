@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/core/utils/helper.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
@@ -36,7 +37,7 @@ class FolderDirectoryTile extends StatelessWidget {
               const Icon(
                 Icons.folder_open_outlined,
                 size: 24,
-                color: Color(0xFFADADAD),
+                color: MusicColors.appTitleColor,
               ),
               const SizedBox(width: 20),
               Expanded(
@@ -47,7 +48,7 @@ class FolderDirectoryTile extends StatelessWidget {
                     Text(
                       entry.name,
                       style: const TextStyle(
-                        color: Color(0xFFDDDDDD),
+                        color: MusicColors.titleColor,
                         fontSize: 18,
                         fontWeight: FontWeight.w400,
                       ),
@@ -58,7 +59,7 @@ class FolderDirectoryTile extends StatelessWidget {
                     Text(
                       formatDate(entry.modifiedDate),
                       style: const TextStyle(
-                        color: Color(0xFF808080),
+                        color: MusicColors.timeLabelColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
                       ),
@@ -69,7 +70,7 @@ class FolderDirectoryTile extends StatelessWidget {
               const Icon(
                 Icons.chevron_right,
                 size: 24,
-                color: Color(0xFF808080),
+                color: MusicColors.timeLabelColor,
               ),
             ],
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/l10n/music_localizations.dart';
 
 class FolderEmptyState extends StatelessWidget {
@@ -14,13 +15,13 @@ class FolderEmptyState extends StatelessWidget {
           const Icon(
             Icons.folder_open_outlined,
             size: 64,
-            color: Color(0xFF808080),
+            color: MusicColors.timeLabelColor,
           ),
           const SizedBox(height: 16),
           Text(
             localizations!.noFilesFound,
             style: const TextStyle(
-              color: Color(0xFF808080),
+              color: MusicColors.timeLabelColor,
               fontSize: 16,
             ),
           ),

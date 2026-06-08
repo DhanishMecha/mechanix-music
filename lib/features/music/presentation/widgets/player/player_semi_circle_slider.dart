@@ -168,7 +168,7 @@ class _PlayerSemiCircleSliderState extends State<PlayerSemiCircleSlider> {
                   painter: SemiCircularSliderPainter(
                     progress: displayProgress,
                     trackColor: MusicColors.progressBarColor,
-                    progressColor: const Color(0xFFDDDDDD),
+                    progressColor: MusicColors.titleColor,
                     thumbColor: Colors.white,
                     radius: radius,
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/l10n/music_localizations.dart';
 import 'package:path/path.dart' as p;
 
@@ -58,7 +59,7 @@ class BreadcrumbsHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.black,
         border: Border(
-          bottom: BorderSide(color: Color(0xFF1C1C1C), width: 1),
+          bottom: BorderSide(color: MusicColors.dividerColor, width: 1),
         ),
       ),
       child: SingleChildScrollView(
@@ -85,8 +86,8 @@ class BreadcrumbsHeader extends StatelessWidget {
                     segment.name,
                     style: TextStyle(
                       color: isLast
-                          ? const Color(0xFFFFFFFF)
-                          : const Color(0xFF808080),
+                          ? MusicColors.white
+                          : MusicColors.timeLabelColor,
                       fontSize: 18,
                       fontWeight: isLast ? FontWeight.w500 : FontWeight.w400,
                     ),
@@ -98,7 +99,7 @@ class BreadcrumbsHeader extends StatelessWidget {
                     child: Text(
                       '/',
                       style: TextStyle(
-                        color: Color(0xFF808080),
+                        color: MusicColors.timeLabelColor,
                         fontSize: 18,
                       ),
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/l10n/music_localizations.dart';
 
 class SelectionHeader extends StatelessWidget {
@@ -24,13 +25,13 @@ class SelectionHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.black,
         border: Border(
-          bottom: BorderSide(color: Color(0xFF1C1C1C), width: 1),
+          bottom: BorderSide(color: MusicColors.dividerColor, width: 1),
         ),
       ),
       child: Text(
         title,
         style: const TextStyle(
-          color: Color(0xFFFFFFFF),
+          color: MusicColors.white,
           fontSize: 18,
           fontWeight: FontWeight.w400,
         ),

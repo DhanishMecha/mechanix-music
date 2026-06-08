@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_state.dart';
@@ -53,7 +54,7 @@ class _FolderContentsBodyState extends State<FolderContentsBody> {
     if (state.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDDDDDD)),
+          valueColor: AlwaysStoppedAnimation<Color>(MusicColors.titleColor),
         ),
       );
     }

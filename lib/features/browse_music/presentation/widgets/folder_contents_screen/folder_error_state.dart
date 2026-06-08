@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/l10n/music_localizations.dart';
 
 class FolderErrorState extends StatelessWidget {
@@ -24,15 +25,15 @@ class FolderErrorState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               error,
-              style: const TextStyle(color: Color(0xFFDDDDDD), fontSize: 16),
+              style: const TextStyle(color: MusicColors.titleColor, fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF151515),
-                foregroundColor: const Color(0xFFDDDDDD),
-                side: const BorderSide(color: Color(0xFF2D2D2D)),
+                backgroundColor: MusicColors.bottomBarBg,
+                foregroundColor: MusicColors.titleColor,
+                side: const BorderSide(color: MusicColors.borderColor),
               ),
               onPressed: onRetry,
               child: Text(localizations!.retry),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/app_routes.dart';
+import 'package:mechanix_music/core/utils/colors.dart';
 import 'package:mechanix_music/core/utils/helper.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
@@ -104,12 +105,12 @@ class FolderAudioTile extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFFADADAD)
-                                : const Color(0xFF555555),
+                                ? MusicColors.appTitleColor
+                                : MusicColors.unselectedBorderColor,
                             width: 2,
                           ),
                           color: isSelected
-                              ? const Color(0xFFADADAD)
+                              ? MusicColors.appTitleColor
                               : Colors.transparent,
                         ),
                         child: isSelected
@@ -124,7 +125,7 @@ class FolderAudioTile extends StatelessWidget {
                   const Icon(
                     Icons.music_note_outlined,
                     size: 24,
-                    color: Color(0xFFADADAD),
+                    color: MusicColors.appTitleColor,
                   ),
                   const SizedBox(width: 20),
                   Expanded(
@@ -135,7 +136,7 @@ class FolderAudioTile extends StatelessWidget {
                         Text(
                           entry.name,
                           style: const TextStyle(
-                            color: Color(0xFFDDDDDD),
+                            color: MusicColors.titleColor,
                             fontSize: 18,
                             fontWeight: FontWeight.w400,
                           ),
@@ -146,7 +147,7 @@ class FolderAudioTile extends StatelessWidget {
                         Text(
                           formatDate(entry.modifiedDate),
                           style: const TextStyle(
-                            color: Color(0xFF808080),
+                            color: MusicColors.timeLabelColor,
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                           ),
