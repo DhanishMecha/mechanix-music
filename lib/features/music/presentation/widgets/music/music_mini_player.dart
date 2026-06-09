@@ -13,21 +13,6 @@ import 'package:mechanix_music/features/music/bloc/player/player_event.dart';
 import 'package:mechanix_music/features/music/bloc/player/player_state.dart';
 import 'package:mechanix_music/features/music/data/repository/playback_repository.dart';
 
-Widget _buildArtwork(String? path, double size) {
-  if (path != null) {
-    final file = File(path);
-    if (file.existsSync()) {
-      return Image.file(file, width: size, height: size, fit: BoxFit.cover);
-    }
-  }
-  return Image.asset(
-    MusicIcons.artworkIcon,
-    width: size,
-    height: size,
-    fit: BoxFit.cover,
-  );
-}
-
 class MusicMiniPlayer extends StatelessWidget {
   const MusicMiniPlayer({super.key});
 
@@ -207,11 +192,38 @@ class _ProgressArtworkState extends State<_ProgressArtwork> {
                   ),
                 ),
               ),
-              ClipOval(child: _buildArtwork(widget.artworkPath, 36)),
+              ClipOval(
+                child: _ArtworkWidget(path: widget.artworkPath, size: 36),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ArtworkWidget extends StatelessWidget {
+  final String? path;
+  final double size;
+
+  const _ArtworkWidget({required this.path, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    if (path != null) {
+      final file = File(path!);
+
+      if (file.existsSync()) {
+        return Image.file(file, width: size, height: size, fit: BoxFit.cover);
+      }
+    }
+
+    return Image.asset(
+      MusicIcons.artworkIcon,
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
     );
   }
 }

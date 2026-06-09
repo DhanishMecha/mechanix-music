@@ -15,13 +15,6 @@ class PlayerControls extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        //repeat icon
-        // MusicButton(
-        //   boxSize: 48,
-        //   iconPath: MusicIcons.repeatIcon,
-        //   isSelected: false,
-        //   onTap: () {},
-        // ),
         const SizedBox(),
 
         // previous icon
@@ -81,14 +74,6 @@ class PlayerControls extends StatelessWidget {
           },
         ),
         const SizedBox(),
-
-        // shuffle icon
-        // MusicButton(
-        //   boxSize: 48,
-        //   iconPath: MusicIcons.shuffleIcon,
-        //   isSelected: false,
-        //   onTap: () {},
-        // ),
       ],
     );
   }

@@ -100,33 +100,29 @@ class FolderAudioTile extends StatelessWidget {
               child: Row(
                 children: [
                   if (isSelectionMode)
-                    GestureDetector(
-                      onTap: () =>
-                          bloc.add(BrowseFolderToggleSelection(entry.path)),
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        margin: const EdgeInsets.only(right: 16),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected
-                                ? MusicColors.appTitleColor
-                                : MusicColors.unselectedBorderColor,
-                            width: 2,
-                          ),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      margin: const EdgeInsets.only(right: 16),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
                           color: isSelected
                               ? MusicColors.appTitleColor
-                              : Colors.transparent,
+                              : MusicColors.unselectedBorderColor,
+                          width: 2,
                         ),
-                        child: isSelected
-                            ? const Icon(
-                                Icons.check,
-                                size: 16,
-                                color: Colors.black,
-                              )
-                            : null,
+                        color: isSelected
+                            ? MusicColors.appTitleColor
+                            : Colors.transparent,
                       ),
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check,
+                              size: 16,
+                              color: Colors.black,
+                            )
+                          : null,
                     ),
                   const Icon(
                     Icons.music_note_outlined,

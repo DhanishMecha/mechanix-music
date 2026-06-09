@@ -55,18 +55,19 @@ class _FolderContentsScreenState extends State<FolderContentsScreen> {
             body: SafeArea(
               child: Column(
                 children: [
-                  if (state.isSelectionMode)
-                    SelectionHeader(selectedCount: state.selectedPaths.length)
-                  else
-                    BreadcrumbsHeader(
-                      currentPath: state.directoryPath,
-                      initialPath: widget.initialPath,
-                      rootTitle: widget.folderName,
-                      onNavigate: (newPath) {
-                        _bloc.add(BrowseFolderNavigate(newPath));
-                      },
-                      onPop: () => Navigator.pop(context),
-                    ),
+                  state.isSelectionMode
+                      ? SelectionHeader(
+                          selectedCount: state.selectedPaths.length,
+                        )
+                      : BreadcrumbsHeader(
+                          currentPath: state.directoryPath,
+                          initialPath: widget.initialPath,
+                          rootTitle: widget.folderName,
+                          onNavigate: (newPath) {
+                            _bloc.add(BrowseFolderNavigate(newPath));
+                          },
+                          onPop: () => Navigator.pop(context),
+                        ),
                   Expanded(child: FolderContentsBody(state: state)),
                 ],
               ),

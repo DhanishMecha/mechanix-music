@@ -55,15 +55,6 @@ class PlayerHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-        // Align(
-        //   alignment: Alignment.center,
-        //   child: MusicButton(
-        //     iconPath: MusicIcons.audiocastIcon,
-        //     boxSize: 48,
-        //     isSelected: false,
-        //     onTap: () {},
-        //   ),
-        // ),
       ],
     );
   }
