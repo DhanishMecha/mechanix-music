@@ -138,7 +138,12 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
             errorType: PlaybackErrorType.fileDeleted,
           ),
         );
+
+        if (state.hasNext) {
+          add(const PlaybackPlayNext());
+        }
         unawaited(_songBloc.songRepository.deleteSongByPath(event.song.path));
+
         completer.completeError(e);
       } catch (e) {
         AppLogger.e('Error during playback: $e');
