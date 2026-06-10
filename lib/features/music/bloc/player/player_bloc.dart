@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/exceptions/app_exceptions.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/core/utils/enums.dart';
@@ -129,25 +130,24 @@ class PlaybackBloc extends Bloc<PlaybackEvent, PlaybackState> {
       try {
         await _repo.play(event.song.path);
         completer.complete();
+      } on PlaybackFileNotFoundException catch (e) {
+        AppLogger.e('Error during playback (file not found): $e');
+        emit(
+          state.copyWith(
+            status: PlaybackStatus.failure,
+            errorType: PlaybackErrorType.fileDeleted,
+          ),
+        );
+        unawaited(_songBloc.songRepository.deleteSongByPath(event.song.path));
+        completer.completeError(e);
       } catch (e) {
-        final errorStr = e.toString().toLowerCase();
         AppLogger.e('Error during playback: $e');
-        if (errorStr.contains('file not found')) {
-          emit(
-            state.copyWith(
-              status: PlaybackStatus.failure,
-              errorType: PlaybackErrorType.fileDeleted,
-            ),
-          );
-          unawaited(_songBloc.songRepository.deleteSongByPath(event.song.path));
-        } else {
-          emit(
-            state.copyWith(
-              status: PlaybackStatus.failure,
-              errorType: PlaybackErrorType.unknown,
-            ),
-          );
-        }
+        emit(
+          state.copyWith(
+            status: PlaybackStatus.failure,
+            errorType: PlaybackErrorType.unknown,
+          ),
+        );
         completer.completeError(e);
       }
     });

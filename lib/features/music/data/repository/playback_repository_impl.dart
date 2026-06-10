@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:mechanix_music/core/exceptions/app_exceptions.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/features/music/data/repository/playback_repository.dart';
 
@@ -25,7 +26,7 @@ class PlaybackRepositoryImpl extends PlaybackRepository {
       if (await File(url).exists()) {
         await _audioPlayer.play(DeviceFileSource(url));
       } else {
-        throw Exception('File not found');
+        throw PlaybackFileNotFoundException('Playback file not found: $url');
       }
     } catch (e) {
       AppLogger.e('[PlaybackRepositoryImpl] Error playing audio: $e');

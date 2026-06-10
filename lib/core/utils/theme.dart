@@ -8,9 +8,21 @@ class AppTheme {
       surfaceTintColor: Colors.transparent,
     ),
     scaffoldBackgroundColor: Colors.black,
-    textTheme: ThemeData.dark(
-      useMaterial3: true,
-    ).textTheme.apply(fontFamily: "Sora"),
+    textTheme: ThemeData.dark(useMaterial3: true).textTheme
+        .apply(fontFamily: "Sora")
+        .copyWith(
+          headlineSmall: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            height: 1.2,
+            fontWeight: FontWeight.w500,
+          ),
+          bodySmall: const TextStyle(
+            color: MusicColors.timeLabelColor,
+            fontSize: 14,
+            height: 1.25,
+          ),
+        ),
     iconButtonTheme: const IconButtonThemeData(
       style: ButtonStyle(
         mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
@@ -33,9 +45,21 @@ class AppTheme {
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
     ),
-    textTheme: ThemeData.light(
-      useMaterial3: true,
-    ).textTheme.apply(fontFamily: "Sora"),
+    textTheme: ThemeData.light(useMaterial3: true).textTheme
+        .apply(fontFamily: "Sora")
+        .copyWith(
+          headlineSmall: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            height: 1.2,
+            fontWeight: FontWeight.w500,
+          ),
+          bodySmall: const TextStyle(
+            color: MusicColors.timeLabelColor,
+            fontSize: 14,
+            height: 1.25,
+          ),
+        ),
     iconButtonTheme: const IconButtonThemeData(
       style: ButtonStyle(
         mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),

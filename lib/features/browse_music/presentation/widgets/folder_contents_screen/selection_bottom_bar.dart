@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/colors.dart';
+import 'package:mechanix_music/core/utils/icons.dart';
+import 'package:mechanix_music/core/widgets/music_button.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_bloc.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/music/bloc/song_bloc.dart';
@@ -67,23 +69,21 @@ class SelectionBottomBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: const Icon(
-              Icons.close,
-              color: MusicColors.titleColor,
-              size: 28,
+          Tooltip(
+            message: localizations!.tooltipCancel,
+            child: MusicButton(
+              iconPath: MusicIcons.closeIcon,
+              isSelected: false,
+              onTap: () => bloc.add(const BrowseFolderSetSelectionMode()),
             ),
-            onPressed: () => bloc.add(const BrowseFolderSetSelectionMode()),
-            tooltip: localizations!.tooltipCancel,
           ),
-          IconButton(
-            icon: const Icon(
-              Icons.check_circle_outline,
-              color: MusicColors.titleColor,
-              size: 28,
+          Tooltip(
+            message: localizations.tooltipSelectAll,
+            child: MusicButton(
+              iconPath: MusicIcons.selectallIcon,
+              isSelected: false,
+              onTap: () => bloc.add(const BrowseFolderSelectAll()),
             ),
-            onPressed: () => bloc.add(const BrowseFolderSelectAll()),
-            tooltip: localizations.tooltipSelectAll,
           ),
           IconButton(
             icon: const Icon(

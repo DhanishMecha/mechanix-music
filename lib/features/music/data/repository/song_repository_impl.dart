@@ -242,7 +242,7 @@ class SongRepositoryImpl extends SongRepository {
     final musicDir = _musicDirectoryProvider();
     final dir = Directory(musicDir);
     if (!dir.existsSync()) {
-      AppLogger.i(
+      AppLogger.e(
         '[FileWatcher] Music directory does not exist: $musicDir. Skipping watcher.',
       );
       return;
@@ -260,7 +260,7 @@ class SongRepositoryImpl extends SongRepository {
           // Cancel any pending debounce for this path and act immediately
           _debounceTimers[event.path]?.cancel();
           _debounceTimers.remove(event.path);
-          _onDelete(event.path);
+          deleteSongByPath(event.path);
 
         case FileSystemEvent.move:
           final moveEvent = event as FileSystemMoveEvent;
@@ -307,25 +307,6 @@ class SongRepositoryImpl extends SongRepository {
       _onSongChanged.add(SongChange(type: SongChangeType.upsert, song: song));
     } catch (e) {
       AppLogger.e('[FileWatcher] Upsert failed for $path: $e');
-    }
-  }
-
-  void _onDelete(String path) {
-    try {
-      final existing = _box!
-          .query(SongModel_.path.equals(path))
-          .build()
-          .findFirst();
-
-      if (existing == null) return;
-
-      _box!.remove(existing.obxId);
-      AppLogger.i('[FileWatcher] Deleted: $path');
-      _onSongChanged.add(
-        SongChange(type: SongChangeType.delete, song: existing),
-      );
-    } catch (e) {
-      AppLogger.e('[FileWatcher] Delete failed for $path: $e');
     }
   }
 

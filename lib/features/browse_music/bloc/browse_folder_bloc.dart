@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/core/utils/app_logger.dart';
 import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_event.dart';
 import 'package:mechanix_music/features/browse_music/bloc/browse_folder_state.dart';
@@ -48,6 +49,7 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
         ),
       );
     } catch (e) {
+      AppLogger.e('[BrowseFolderBloc] _onLoad failed: $e');
       emit(state.copyWith(isLoading: false, error: 'Failed to load directory'));
     }
   }
@@ -75,6 +77,7 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
         ),
       );
     } catch (e) {
+      AppLogger.e('[BrowseFolderBloc] _onLoadMore failed: $e');
       emit(state.copyWith(isLoadingMore: false));
     }
   }
@@ -111,6 +114,7 @@ class BrowseFolderBloc extends Bloc<BrowseFolderEvent, BrowseFolderState> {
         ),
       );
     } catch (e) {
+      AppLogger.e('[BrowseFolderBloc] _onNavigate failed: $e');
       emit(state.copyWith(isLoading: false, error: 'Failed to load directory'));
     }
   }

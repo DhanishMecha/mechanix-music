@@ -7,3 +7,15 @@ class AppAlreadyRunningException implements Exception {
   @override
   String toString() => message;
 }
+
+class PlaybackException implements Exception {
+  final String message;
+  PlaybackException([this.message = 'An unknown playback error occurred.']);
+
+  @override
+  String toString() => message;
+}
+
+class PlaybackFileNotFoundException extends PlaybackException {
+  PlaybackFileNotFoundException([String message = 'Playback file not found.']);
+}

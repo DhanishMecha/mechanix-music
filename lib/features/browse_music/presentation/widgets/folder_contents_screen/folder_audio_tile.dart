@@ -147,7 +147,10 @@ class FolderAudioTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          formatDate(entry.modifiedDate),
+                          formatDate(
+                            entry.modifiedDate,
+                            locale: Localizations.localeOf(context).toString(),
+                          ),
                           style: const TextStyle(
                             color: MusicColors.timeLabelColor,
                             fontSize: 14,

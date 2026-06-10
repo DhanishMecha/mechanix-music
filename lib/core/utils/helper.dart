@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:intl/intl.dart';
+import 'package:mechanix_music/core/utils/constants.dart';
 import 'package:mechanix_music/core/utils/enums.dart';
 import 'package:mechanix_music/l10n/music_localizations.dart';
 
 String getMusicDirectory() {
   final home = Platform.environment['HOME'] ?? '/home';
-  return '$home/Music';
+  return '$home${Constants.musicDirPath}';
 }
 
 String songErrorMessage(AppLocalizations l10n, SongErrorType errorType) {
@@ -32,20 +34,7 @@ String formatDuration(Duration duration) {
   }
 }
 
-String formatDate(DateTime date) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${date.day} ${months[date.month - 1]} ${date.year}';
+String formatDate(DateTime date, {String? locale}) {
+  final formatter = DateFormat('d MMM y', locale ?? Intl.defaultLocale);
+  return formatter.format(date);
 }

@@ -67,8 +67,10 @@ class FileScannerService {
 
       // Read metadata
       AudioMetadata? meta;
+
       try {
         final file = File(filePath);
+        if (!await file.exists()) return null;
         meta = readMetadata(file, getImage: true);
       } catch (metaError) {
         AppLogger.i(

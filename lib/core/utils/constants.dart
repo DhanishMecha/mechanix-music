@@ -1,5 +1,6 @@
 class Constants {
-  static const String dbPath = '.config/mechanix_music/objectbox';
+  static const String dbPath = '.config/mechanix_apps/music/objectbox';
+  static const String musicDirPath = '/Music';
   static const Duration debounceDuration = Duration(milliseconds: 300);
   static const audioExt = [
     '.mp3',
