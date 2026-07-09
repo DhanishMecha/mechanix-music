@@ -22,6 +22,7 @@ class TrackTile extends StatelessWidget {
     return ListTile(
       minVerticalPadding: 20,
       dense: false,
+      splashColor: Colors.transparent,
       onTap: () {
         AppLogger.i('Song tapped: ${song.title} by ${song.artist}');
         final currentSong = context.read<PlaybackBloc>().state.song;

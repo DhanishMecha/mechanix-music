@@ -17,7 +17,7 @@ class BrowseFolderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      splashColor: const Color(0x1AFFFFFF),
+      splashFactory: NoSplash.splashFactory,
       highlightColor: const Color(0x0DFFFFFF),
       child: SizedBox(
         height: 64,

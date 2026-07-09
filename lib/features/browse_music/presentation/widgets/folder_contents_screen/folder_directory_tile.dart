@@ -23,7 +23,7 @@ class FolderDirectoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => _onTap(context),
-      splashColor: const Color(0x1AFFFFFF),
+      splashColor: Colors.transparent,
       highlightColor: const Color(0x0DFFFFFF),
       child: SizedBox(
         height: 72,

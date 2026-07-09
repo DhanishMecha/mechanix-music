@@ -148,12 +148,7 @@ class FileScannerService {
   Future<Directory> _getArtworkCacheDir() async {
     if (_artworkCacheDir != null) return _artworkCacheDir!;
 
-    final appSupportDir = await getApplicationSupportDirectory();
-    final dir = Directory(p.join(appSupportDir.path, 'artworks'));
-    final exists = await dir.exists();
-    if (!exists) {
-      await dir.create(recursive: true);
-    }
+    final dir = await getApplicationCacheDirectory();
 
     _artworkCacheDir = dir;
     return dir;

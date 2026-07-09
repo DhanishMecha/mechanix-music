@@ -11,8 +11,9 @@ import 'package:mechanix_music/features/music/data/models/song_model.dart';
 import 'package:mechanix_music/features/music/data/repository/song_repository.dart';
 import 'package:mechanix_music/objectbox.g.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'dart:isolate';
+
+import 'package:path_provider/path_provider.dart';
 
 class SongRepositoryImpl extends SongRepository {
   SongRepositoryImpl({
@@ -114,8 +115,8 @@ class SongRepositoryImpl extends SongRepository {
       if (provider != null) {
         artworkCacheDirPath = await provider();
       } else {
-        final appSupportDir = await getApplicationSupportDirectory();
-        artworkCacheDirPath = Directory('${appSupportDir.path}/artworks').path;
+        final artworkCacheDir = await getApplicationCacheDirectory();
+        artworkCacheDirPath = artworkCacheDir.path;
       }
 
       final dbPath = _dbDirectoryPath ?? _store!.directoryPath;

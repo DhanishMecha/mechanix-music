@@ -91,7 +91,7 @@ class FolderAudioTile extends StatelessWidget {
         return InkWell(
           onTap: () => _onTap(context, state, bloc),
           onLongPress: () => _onLongPress(context, state, bloc),
-          splashColor: const Color(0x1AFFFFFF),
+          splashFactory: NoSplash.splashFactory,
           highlightColor: const Color(0x0DFFFFFF),
           child: SizedBox(
             height: 72,
